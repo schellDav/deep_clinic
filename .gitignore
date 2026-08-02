@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.env
+
+# Data & Models
+data/
+*.bin
+*.pt
+*.safetensors
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
