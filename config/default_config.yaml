@@ -1,0 +1,56 @@
+# ==============================================================================
+# Configuration file for Comparative RAG vs. Cross-Encoder & GAR Benchmarking
+# ==============================================================================
+
+project:
+  name: "deep_clinic_rag_gar"
+  seed: 42
+  data_dir: "./data"
+  output_dir: "./outputs"
+  cache_dir: "./cache"
+
+dataset:
+  name: "pubmed_qa"
+  subset: "pqa_labeled"  # Options: pqa_labeled, pqa_unlabeled, pqa_artificial
+  max_passages: null    # Null for full dataset, or an integer for debugging
+
+retrieval:
+  lexical:
+    enabled: true
+    method: "bm25s"
+    top_k: 100
+  dense:
+    enabled: true
+    model_name: "lightonai/Reason-ModernColBERT" # Alternative: qwen3-embed-0.6b
+    batch_size: 32
+    top_k: 100
+
+graph_adaptive_reranking:
+  enabled: true
+  knn_neighbors: 10           # k-NN edges per document node
+  similarity_threshold: 0.65  # Min edge weight threshold for corpus graph
+  max_hops: 2                 # Candidate pool expansion depth
+  alpha_decay: 0.5            # Multi-hop candidate score decay factor
+  candidate_pool_size: 200    # Top-K candidate pool after graph expansion
+
+cross_encoder_reranking:
+  enabled: true
+  model_name: "cross-encoder/ms-marco-MiniLM-L-6-v2" # Alternative: monoT5-base
+  batch_size: 16
+  final_top_k: 10
+
+generation:
+  model_name: "meta-llama/Llama-3.2-3B-Instruct" # Alternative: Qwen/Qwen2.5-3B-Instruct
+  max_new_tokens: 256
+  temperature: 0.1
+
+evaluation:
+  metrics:
+    - ndcg_cut_10
+    - recall_10
+    - recall_100
+    - recall_1000
+  ragas:
+    metrics:
+      - faithfulness
+      - answer_relevance
