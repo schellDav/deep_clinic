@@ -34,13 +34,17 @@ C. EVALUATION METRICS
 D. COMPUTE & HARDWARE
 - Local Hardware: NVIDIA RTX 5060 (16 GB VRAM)
 - Cluster Resource: KISSKI GPU Platform (https://kisski.gwdg.de/en/leistungen/2-01-01_trainingsplattform/)
+- Workload Manager: Slurm Workload Manager for HPC job scheduling, multi-GPU allocation, and batch script execution (sbatch).
 
 --------------------------------------------------------------------------------
 2. STEP-BY-STEP EXECUTION PLAN
 --------------------------------------------------------------------------------
 
-PHASE 1: ENVIRONMENT & COMPUTE SETUP
+PHASE 1: ENVIRONMENT, COMPUTE & SLURM SETUP
 - Apply for KISSKI GPU cluster resources (https://kisski.gwdg.de/en/leistungen/2-01-01_trainingsplattform/).
+- Setup Slurm workload management infrastructure:
+  * Create reusable Slurm batch scripts (`sbatch`) for indexing, candidate expansion, cross-encoder re-ranking, and LLM inference.
+  * Configure reproducible cluster environment (Conda / Virtualenv / Apptainer).
 - Define project requirements and documentation files (.txt / .md).
 
 PHASE 2: CORPUS PREPARATION & CORPUS-GRAPH CONSTRUCTION

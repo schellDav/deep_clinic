@@ -1,7 +1,7 @@
 # Project Requirements & Execution Plan
 
 **Course:** Deep Learning in the Clinic: From Algorithms to Virtual Cells  
-**Project Title:** Comparative Benchmarking of Standard RAG vs. Cross-Encoder Re-Ranking & Graph-Adaptive Re-Ranking (GAR)  
+**Project Title:** Advanced RAG Benchmarking: Standard, Cross-Encoder, and GAR
 **Authors:** Alexey Wratschinski and David Schell  
 **Dataset:** PubMedQA (Biomedical Question Answering)
 
@@ -34,17 +34,21 @@
    - **Framework:** `RAGAS` (LLM-as-a-Judge framework).
    - **Key Metrics:** *Faithfulness* (hallucination detection) and *Answer Relevance*.
 
-### D. Compute Infrastructure
+### D. Compute Infrastructure & Workload Management
 - **Local Development:** NVIDIA RTX 5060 (16 GB VRAM).
 - **Cluster Resource:** **KISSKI GPU Cluster** ([KISSKI Training Platform](https://kisski.gwdg.de/en/leistungen/2-01-01_trainingsplattform/)) for corpus graph indexing and large model inference.
+- **Workload Manager / Job Scheduler:** **Slurm** cluster environment for high-performance computing (`sbatch` job submission, GPU resource requests `#SBATCH --gpus=...`, log redirection, job execution pipelines).
 
 ---
 
 ## 2. Step-by-Step Execution Plan
 
-### Phase 1: Environment & Compute Allocation
+### Phase 1: Environment, Compute & Slurm Setup
 1. Submit GPU resource application for the **KISSKI GPU platform**.
-2. Document project requirements in `requirements.txt` and `.md` project guides.
+2. Set up Slurm workload management infrastructure:
+   - Create reusable Slurm batch scripts (`sbatch`) for memory-heavy indexing, re-ranking, and LLM inference.
+   - Configure reproducible cluster environment (Conda / Virtualenv / Apptainer containers).
+3. Document project requirements in `requirements.txt` and `.md` project guides.
 
 ### Phase 2: Corpus Ingestion & Corpus-Graph Construction
 1. Load PubMedQA abstracts and format into passage corpus.
