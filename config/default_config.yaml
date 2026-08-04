@@ -27,11 +27,12 @@ retrieval:
 
 graph_adaptive_reranking:
   enabled: true
+  seed_top_k: 20              # Initial seed candidates retrieved before graph expansion
   knn_neighbors: 10           # k-NN edges per document node
   similarity_threshold: 0.65  # Min edge weight threshold for corpus graph
-  max_hops: 2                 # Candidate pool expansion depth
-  alpha_decay: 0.5            # Multi-hop candidate score decay factor
-  candidate_pool_size: 200    # Top-K candidate pool after graph expansion
+  max_hops: 2                 # Multi-hop traversal depth
+  alpha_decay: 0.5            # Multi-hop score decay factor
+  candidate_pool_size: 100    # Final candidate pool size passed to Cross-Encoder
 
 cross_encoder_reranking:
   enabled: true
