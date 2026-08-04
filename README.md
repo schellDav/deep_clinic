@@ -42,22 +42,7 @@ Project/
 
 ## 3. Environment Setup
 
-### Option A: Local Development (NVIDIA RTX 5060)
-
-```bash
-# Using Conda / Micromamba
-conda env create -f environment.yml
-conda activate deep_clinic_rag
-
-# Or using standard pip & venv
-python3 -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-### Option B: Slurm Cluster Execution (KISSKI GPU Cluster)
-
-Execute the setup helper script on the cluster head node:
+Execute the setup helper script on the cluster head node (KISSKI GPU Cluster):
 
 ```bash
 chmod +x scripts/setup_env.sh
