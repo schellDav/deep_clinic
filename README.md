@@ -77,3 +77,36 @@ Monitor job status using:
 ```bash
 squeue -u $USER
 ```
+
+---
+
+## 5. How to Reproduce All Results
+
+Anyone can reproduce the full benchmark pipeline from scratch by following these steps:
+
+### Step 1: Clone Repository & Setup Environment
+```bash
+git clone https://github.com/schellDav/deep_clinic.git
+cd deep_clinic
+chmod +x scripts/setup_env.sh
+./scripts/setup_env.sh
+```
+
+### Step 2: Build Corpus Graph & Embeddings
+Run the graph builder script to download PubMedQA (`pqa_labeled`), compute BM25s index + ModernColBERT dense embeddings, and generate the hybrid k-NN Corpus Graph (`.npz`):
+```bash
+# Run locally or via Slurm:
+python -m src.build_graph --config config/default_config.yaml
+# Or on Slurm:
+sbatch scripts/slurm/01_build_graph.sh
+```
+
+### Step 3: Execute Retrieval, GAR Expansion & Evaluation
+```bash
+# Run retrieval & GAR candidate expansion:
+sbatch scripts/slurm/02_retrieve_gar.sh
+
+# Run end-to-end LLM generation & RAGAS evaluation:
+sbatch scripts/slurm/03_eval_ragas.sh
+```
+
