@@ -183,15 +183,9 @@ def compute_dense_embeddings(passages: List[Dict[str, Any]], model_name: str = "
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"[+] Computing on device: {device.upper()}")
 
-    # Load model and tokenizer from Hugging Face Hub with fallback safety
-    try:
-        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-        model = AutoModel.from_pretrained(model_name, trust_remote_code=True).to(device)
-    except Exception as e:
-        print(f"[!] Warning: Could not load '{model_name}' ({e}). Falling back to 'sentence-transformers/all-MiniLM-L6-v2'.")
-        model_name = "sentence-transformers/all-MiniLM-L6-v2"
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModel.from_pretrained(model_name).to(device)
+    # Load model and tokenizer directly from Hugging Face Hub (strict loading)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+    model = AutoModel.from_pretrained(model_name, trust_remote_code=True).to(device)
 
     model.eval()
     texts = [p["text"] for p in passages]
