@@ -20,8 +20,16 @@ This repository evaluates biomedical Retrieval-Augmented Generation (RAG) across
 
 ```
 Project/
+├── cache/                      # Generated vector embedding caches (.npy)
+│   └── embeddings.npy
 ├── config/
 │   └── default_config.yaml     # Project configuration (models, batch sizes, graph parameters)
+├── data/                       # Ingested corpus and serialized graph artifacts (.npz, .json)
+│   ├── corpus_graph.npz
+│   ├── doc_ids.json
+│   ├── ori_pqal.json
+│   ├── passages.json
+│   └── qrels.json
 ├── scripts/
 │   ├── setup_env.sh            # Helper script to initialize virtual environment
 │   └── slurm/                  # HPC Slurm batch execution scripts
@@ -30,12 +38,13 @@ Project/
 │       ├── 03_eval_ragas.sh    # Run LLM generation and RAGAS evaluation
 │       └── submit_all.sh       # Master Slurm job orchestrator (dependency chaining)
 ├── src/                        # Core Python source package
-│   └── __init__.py
-├── requirements.txt            # Python pip dependencies
+│   ├── __init__.py
+│   └── build_graph.py          # Corpus ingestion, embedding & graph builder
 ├── environment.yml             # Conda environment definition
+├── PROGRESS.md                 # Minimal functional progress tracker log
 ├── PROJECT_PLAN.md             # Detailed project specification & execution plan
-├── REQUIREMENTS_AND_PLAN.txt   # Text plan reference
-└── README.md                   # Setup & usage instructions
+├── README.md                   # Setup & usage instructions
+└── requirements.txt            # Python pip dependencies
 ```
 
 ---
