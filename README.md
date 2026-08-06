@@ -103,11 +103,15 @@ chmod +x scripts/setup_env.sh
 ```
 
 ### Step 2: Build Corpus Graph & Embeddings
-Run the graph builder script to download PubMedQA (`pqa_labeled`), compute BM25s index + ModernColBERT dense embeddings, and generate the hybrid k-NN Corpus Graph (`.npz`):
+Run the graph builder script to download PubMedQA, compute BM25s index + ModernColBERT dense embeddings, and generate the hybrid k-NN Corpus Graph (`.npz`):
 ```bash
-# Run locally or via Slurm:
+# Standard 1k Labeled Corpus (Default):
 python -m src.build_graph --config config/default_config.yaml
-# Or on Slurm:
+
+# Full 62k Expanded Corpus (62,249 abstracts):
+python -m src.build_graph --config config/default_config.yaml --max_passages 62249
+
+# Or on Slurm Cluster (KISSKI):
 sbatch scripts/slurm/01_build_graph.sh
 ```
 
