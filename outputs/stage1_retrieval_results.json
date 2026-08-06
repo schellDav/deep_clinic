@@ -1,19 +1,42 @@
 {
   "stage": "Stage 1 - Initial Retrieval Baselines",
-  "dataset": "pqa_labeled",
-  "num_queries": 1000,
-  "metrics": {
-    "BM25s_Lexical": {
-      "ndcg_cut_10": 0.9686769481510743,
-      "recall_10": 0.986,
-      "recall_100": 0.993,
-      "recall_1000": 0.993
-    },
-    "ModernColBERT_Dense": {
-      "ndcg_cut_10": 0.9684578733181901,
-      "recall_10": 0.994,
-      "recall_100": 1.0,
-      "recall_1000": 1.0
+  "corpus_1k": {
+    "dataset": "pqa_labeled",
+    "num_queries": 1000,
+    "corpus_size": 1000,
+    "metrics": {
+      "BM25s_Lexical": {
+        "ndcg_cut_10": 0.9686769481510743,
+        "recall_10": 0.986,
+        "recall_100": 0.993,
+        "recall_1000": 0.993
+      },
+      "ModernColBERT_Dense": {
+        "ndcg_cut_10": 0.9684578733181901,
+        "recall_10": 0.994,
+        "recall_100": 1.0,
+        "recall_1000": 1.0
+      }
+    }
+  },
+  "corpus_62k": {
+    "stage": "Stage 1 - Initial Retrieval Baselines",
+    "dataset": "pqa_labeled",
+    "num_queries": 62249,
+    "corpus_size": 62249,
+    "metrics": {
+      "BM25s_Lexical": {
+        "ndcg_cut_10": 0.8386557814477386,
+        "recall_10": 0.9163841989429549,
+        "recall_100": 0.9670195505148677,
+        "recall_1000": 0.9670195505148677
+      },
+      "ModernColBERT_Dense": {
+        "ndcg_cut_10": 0.7864623345329922,
+        "recall_10": 0.9058298125271089,
+        "recall_100": 0.9774936143552507,
+        "recall_1000": 0.9774936143552507
+      }
     }
   }
 }

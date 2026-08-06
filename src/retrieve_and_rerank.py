@@ -360,21 +360,40 @@ def main() -> None:
     print(f"{'Reason-ModernColBERT Dense':<30} | {dense_eval.get('ndcg_cut_10', 0):<10.4f} | {dense_eval.get('recall_10', 0):<10.4f} | {dense_eval.get('recall_100', 0):<10.4f} | {dense_eval.get('recall_1000', 0):<10.4f}")
     print("================================================================================")
 
-    # 6. Save JSON results file
-    results_output_path = os.path.join(output_dir, "stage1_retrieval_results.json")
+    # 6. Save JSON results file (save corpus-specific benchmark files to preserve 1k and 62k metrics)
+    corpus_size = len(passages)
+    suffix = "62k" if corpus_size > 1000 else "1k"
+    specific_output_path = os.path.join(output_dir, f"stage1_retrieval_results_{suffix}.json")
+    master_output_path = os.path.join(output_dir, "stage1_retrieval_results.json")
+
     results_data = {
         "stage": "Stage 1 - Initial Retrieval Baselines",
         "dataset": config["dataset"]["subset"],
         "num_queries": len(qrels),
+        "corpus_size": corpus_size,
         "metrics": {
             "BM25s_Lexical": bm25_eval,
             "ModernColBERT_Dense": dense_eval
         }
     }
-    with open(results_output_path, "w", encoding="utf-8") as f:
-        json.dump(results_data, f, indent=2)
 
-    print(f"\n[+] Results successfully saved to '{results_output_path}'")
+    with open(specific_output_path, "w", encoding="utf-8") as f:
+        json.dump(results_data, f, indent=2)
+    print(f"\n[+] Specific results saved to '{specific_output_path}'")
+
+    # Update or merge master JSON with both 1k and 62k benchmarks
+    master_data = {}
+    if os.path.exists(master_output_path):
+        try:
+            with open(master_output_path, "r", encoding="utf-8") as f:
+                master_data = json.load(f)
+        except Exception:
+            master_data = {}
+
+    master_data[f"corpus_{suffix}"] = results_data
+    with open(master_output_path, "w", encoding="utf-8") as f:
+        json.dump(master_data, f, indent=2)
+    print(f"[+] Master results updated at '{master_output_path}'")
 
 
 if __name__ == "__main__":
