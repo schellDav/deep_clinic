@@ -8,6 +8,7 @@ env/
 venv/
 ENV/
 .env
+.venv/
 
 # Data & Models
 data/
