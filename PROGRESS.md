@@ -8,8 +8,8 @@ STATUS OVERVIEW
 ================================================================================
 Phase 1: Environment, Slurm & Config Setup    [COMPLETED]
 Phase 2: Corpus Ingestion & Graph Building     [COMPLETED]
-Phase 3: Initial Retrieval Baselines           [IN PROGRESS]
-Phase 4: Static Re-Ranking & GAR Integration   [PENDING]
+Phase 3: Initial Retrieval Baselines           [COMPLETED]
+Phase 4: Static Re-Ranking & GAR Integration   [IN PROGRESS]
 Phase 5: Quantitative IR Evaluation            [PENDING]
 Phase 6: End-to-End LLM & RAGAS Analysis       [PENDING]
 Phase 7: Visualization & Report Synthesis      [PENDING]
@@ -33,18 +33,20 @@ Phase 2: Corpus Ingestion & Corpus Graph Construction
 - Downloaded and parsed official PubMedQA labeled corpus (1,000 expert QA abstracts).
 - Computed dense passage embeddings (Reason-ModernColBERT, shape 1000x768).
 - Built BM25s lexical index and hybrid k-NN similarity adjacency matrix (25,556 edges).
-- Generated serialized artifacts in data/ and cache/:
-  * data/corpus_graph.npz (SciPy CSR Matrix)
-  * data/doc_ids.json (Document ID map)
-  * data/passages.json (Parsed passage corpus)
-  * data/qrels.json (Relevance ground-truth)
-  * cache/embeddings.npy (Dense vectors)
+- Generated serialized artifacts in data/ and cache/.
+
+Phase 3: Stage 1 — Initial Retrieval Baselines (BM25s & Dense)
+- Created src/retrieve_and_rerank.py module for Stage 1 initial retrieval baselines.
+- Executed BM25s sparse lexical retrieval for 1,000 queries (nDCG@10: 0.9687, Recall@10: 0.9860, Recall@100: 0.9930).
+- Executed Reason-ModernColBERT dense vector similarity search (nDCG@10: 0.9685, Recall@10: 0.9940, Recall@100: 1.0000).
+- Evaluated metrics using pytrec_eval and native Python fallback.
+- Saved benchmark metrics to outputs/stage1_retrieval_results.json.
 
 ================================================================================
 CURRENT STEP
 ================================================================================
 
-Phase 3: Stage 1 — Initial Retrieval Baselines (BM25s & Dense)
-- Implement baseline retrieval pipeline in src/retrieve_and_rerank.py
-- Compute Stage 1 Lexical (BM25s) and Dense (Reason-ModernColBERT) retrieval results.
-- Evaluate initial retrieval baselines using pytrec_eval (nDCG@10, Recall@10, Recall@100, Recall@1000).
+Phase 4: Stage 2 & 3 — Static Re-Ranking & GAR Integration
+- Extend src/retrieve_and_rerank.py to add Static Re-Ranking (Cross-Encoder / monoT5).
+- Implement Graph-Adaptive Re-Ranking (GAR) candidate pool expansion via multi-hop traversal on corpus_graph.npz.
+- Compare candidates and re-ranking accuracy across all 3 retrieval stages.
