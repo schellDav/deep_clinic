@@ -100,22 +100,41 @@ def load_pubmedqa_corpus(subset: str = "pqa_labeled", max_passages: int = None) 
     local_json_path = os.path.join(data_dir, "ori_pqal.json")
 
     # Step 1: Check local disk cache or download official PubMedQA JSON dataset
-    raw_data = None
+    raw_data = {}
     if os.path.exists(local_json_path):
-        print(f"[+] Found cached PubMedQA file at '{local_json_path}'.")
+        print(f"[+] Found cached PubMedQA labeled file at '{local_json_path}'.")
         with open(local_json_path, "r", encoding="utf-8") as f:
-            raw_data = json.load(f)
+            raw_data.update(json.load(f))
     else:
         url = "https://raw.githubusercontent.com/pubmedqa/pubmedqa/master/data/ori_pqal.json"
         print(f"[+] Downloading official PubMedQA labeled data from '{url}'...")
         import urllib.request
         with urllib.request.urlopen(url) as response:
             content = response.read().decode("utf-8")
-            raw_data = json.loads(content)
-        # Write raw content to local cache
+            labeled_json = json.loads(content)
+            raw_data.update(labeled_json)
         with open(local_json_path, "w", encoding="utf-8") as f:
             f.write(content)
-        print(f"[+] Cached PubMedQA dataset locally to '{local_json_path}'.")
+        print(f"[+] Cached PubMedQA labeled dataset locally to '{local_json_path}'.")
+
+    # If max_passages > 1000 or subset == "full", load unlabeled abstracts (ori_pqau.json) as distractors
+    if (max_passages is not None and max_passages > 1000) or subset in ["pqa_unlabeled", "full"]:
+        local_unlabeled_path = os.path.join(data_dir, "ori_pqau.json")
+        if os.path.exists(local_unlabeled_path):
+            print(f"[+] Found cached PubMedQA unlabeled file at '{local_unlabeled_path}'.")
+            with open(local_unlabeled_path, "r", encoding="utf-8") as f:
+                raw_data.update(json.load(f))
+        else:
+            url_u = "https://raw.githubusercontent.com/pubmedqa/pubmedqa/master/data/ori_pqau.json"
+            print(f"[+] Downloading official PubMedQA unlabeled distractor data (61k abstracts) from '{url_u}'...")
+            import urllib.request
+            with urllib.request.urlopen(url_u) as response:
+                content_u = response.read().decode("utf-8")
+                unlabeled_json = json.loads(content_u)
+                raw_data.update(unlabeled_json)
+            with open(local_unlabeled_path, "w", encoding="utf-8") as f:
+                f.write(content_u)
+            print(f"[+] Cached PubMedQA unlabeled dataset locally to '{local_unlabeled_path}'.")
 
     passages = []
     qrels = {}
