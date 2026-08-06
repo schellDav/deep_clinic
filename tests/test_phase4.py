@@ -44,6 +44,7 @@ class TestPhase4Implementation(unittest.TestCase):
 
         expanded = run_gar_expansion(
             seed_run=mock_seed_run,
+            qrels=qrels,
             corpus_graph_matrix=corpus_graph,
             doc_ids_list=doc_ids,
             depth=2,
