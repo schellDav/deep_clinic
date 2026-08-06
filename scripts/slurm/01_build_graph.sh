@@ -24,9 +24,10 @@ echo "CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES:-none}"
 # module load python/3.10
 
 # Activate Python Environment
-if [ -d "$HOME/.conda/envs/deep_clinic_rag" ]; then
-    source activate deep_clinic_rag
-elif [ -d ".venv" ]; then
+if command -v conda &> /dev/null; then
+    eval "$(conda shell.bash hook)" 2>/dev/null || true
+    conda activate deep_clinic_rag 2>/dev/null || source activate deep_clinic_rag 2>/dev/null || true
+elif [ -f ".venv/bin/activate" ]; then
     source .venv/bin/activate
 fi
 
