@@ -24,23 +24,33 @@ Project/
 │   └── embeddings.npy
 ├── config/
 │   └── default_config.yaml     # Project configuration (models, batch sizes, graph parameters)
-├── data/                       # Ingested corpus and serialized graph artifacts (.npz, .json)
+├── data/                       # Ingested corpus and serialized graph artifacts (.npz, .json, .parquet)
 │   ├── corpus_graph.npz
 │   ├── doc_ids.json
 │   ├── ori_pqal.json
 │   ├── passages.json
+│   ├── pqa_unlabeled.parquet
 │   └── qrels.json
+├── outputs/                    # Evaluation benchmark results (.json)
+│   ├── stage1_retrieval_results.json
+│   ├── stage1_retrieval_results_1k.json
+│   └── stage1_retrieval_results_62k.json
 ├── scripts/
 │   ├── setup_env.sh            # Helper script to initialize virtual environment
 │   └── slurm/                  # HPC Slurm batch execution scripts
 │       ├── 01_build_graph.sh   # Build PubMedQA corpus graph
 │       ├── 02_retrieve_gar.sh  # Run retrieval, GAR expansion, and re-ranking
 │       ├── 03_eval_ragas.sh    # Run LLM generation and RAGAS evaluation
-│       ├── 04_full_corpus_ablation.sh # Optional 62k full corpus scaling ablation
+│       ├── 04_full_corpus_ablation.sh # 62k full corpus scaling ablation
 │       └── submit_all.sh       # Master Slurm job orchestrator (dependency chaining)
 ├── src/                        # Core Python source package
 │   ├── __init__.py
-│   └── build_graph.py          # Corpus ingestion, embedding & graph builder
+│   ├── build_graph.py          # Corpus ingestion, embedding & graph builder
+│   └── retrieve_and_rerank.py  # Stage 1 retrieval baselines & TREC evaluation
+├── tests/                      # Automated test suite
+│   ├── test_all_phases.py      # Master test runner
+│   ├── test_phase2.py          # Phase 2 graph construction unit tests
+│   └── test_phase3.py          # Phase 3 retrieval baseline unit tests
 ├── environment.yml             # Conda environment definition
 ├── PROGRESS.md                 # Minimal functional progress tracker log
 ├── PROJECT_PLAN.md             # Detailed project specification & execution plan
