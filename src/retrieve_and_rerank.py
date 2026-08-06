@@ -95,7 +95,13 @@ def load_artifacts(data_dir: str = "data", cache_dir: str = "cache") -> Tuple[Li
         passages = json.load(f)
 
     with open(qrels_path, "r", encoding="utf-8") as f:
-        qrels = json.load(f)
+        raw_qrels = json.load(f)
+
+    # Filter qrels to only expert QA test questions (1,000 items)
+    qrels = {}
+    for qid, data in raw_qrels.items():
+        if data.get("question", "").strip() and "relevant_doc_ids" in data:
+            qrels[qid] = data
 
     with open(doc_ids_path, "r", encoding="utf-8") as f:
         doc_ids = json.load(f)
@@ -103,7 +109,7 @@ def load_artifacts(data_dir: str = "data", cache_dir: str = "cache") -> Tuple[Li
     passage_embeddings = np.load(embeddings_path)
     corpus_graph = sp.load_npz(graph_path)
 
-    print(f"[+] Successfully loaded {len(passages)} passages and {len(qrels)} qrels.")
+    print(f"[+] Successfully loaded {len(passages)} passages and {len(qrels)} test queries.")
     return passages, qrels, doc_ids, passage_embeddings, corpus_graph
 
 
@@ -277,9 +283,11 @@ def run_cross_encoder_rerank(
 
     reranked_run = {}
     for qid, candidate_scores in tqdm(candidate_run.items(), desc="Cross-Encoder Re-Ranking"):
-        question = qrels.get(qid, {}).get("question", "")
-        cand_doc_ids = list(candidate_scores.keys())
+        question = qrels.get(qid, {}).get("question", "").strip()
+        if not question:
+            continue
 
+        cand_doc_ids = list(candidate_scores.keys())
         pairs = [(question, doc_map.get(doc_id, "")) for doc_id in cand_doc_ids]
         if not pairs:
             continue
@@ -298,6 +306,7 @@ def run_cross_encoder_rerank(
 
 def run_gar_expansion(
     seed_run: Dict[str, Dict[str, float]],
+    qrels: Dict[str, Any],
     corpus_graph_matrix: sp.csr_matrix,
     doc_ids_list: List[str],
     depth: int = 2,
@@ -309,6 +318,7 @@ def run_gar_expansion(
 
     Args:
         seed_run (Dict[str, Dict[str, float]]): Top N=20 seed candidates from Stage 1.
+        qrels (Dict[str, Any]): Ground-truth QA dictionary containing questions.
         corpus_graph_matrix (sp.csr_matrix): Pre-computed hybrid similarity Corpus Graph (SciPy CSR).
         doc_ids_list (List[str]): Ordered document ID mapping matching corpus_graph_matrix rows/cols.
         depth (int): Multi-hop graph traversal depth (default: 2 hops).
@@ -325,6 +335,10 @@ def run_gar_expansion(
     expanded_candidates = {}
 
     for qid, seed_scores in seed_run.items():
+        question = qrels.get(qid, {}).get("question", "").strip()
+        if not question:
+            continue
+
         # Map seed candidate doc_ids to matrix node indices
         seed_indices = [doc_id_to_idx[did] for did in seed_scores.keys() if did in doc_id_to_idx]
         if not seed_indices:
@@ -465,55 +479,99 @@ def main() -> None:
         batch_size=dense_batch_size
     )
 
-    # 4. Evaluate Stage 1 baselines using pytrec_eval
+    # 4. Stage 2 Static Cross-Encoder Re-Ranking
+    ce_model_name = config["cross_encoder_reranking"]["model_name"]
+    ce_batch_size = config["cross_encoder_reranking"]["batch_size"]
+    ce_final_top_k = config["cross_encoder_reranking"]["final_top_k"]
+
+    stage2_rerank_run = run_cross_encoder_rerank(
+        passages=passages,
+        qrels=qrels,
+        candidate_run=dense_run,
+        model_name=ce_model_name,
+        top_k=ce_final_top_k,
+        batch_size=ce_batch_size
+    )
+
+    # 5. Stage 3 Graph-Adaptive Re-Ranking (GAR) Candidate Expansion & Re-Ranking
+    gar_seed_k = config["graph_adaptive_reranking"]["seed_top_k"]
+    gar_depth = config["graph_adaptive_reranking"]["max_hops"]
+    gar_alpha = config["graph_adaptive_reranking"]["alpha_decay"]
+    gar_pool_k = config["graph_adaptive_reranking"]["candidate_pool_size"]
+
+    # Extract seed runs (Top-N=20 candidates from Stage 1)
+    seed_run = {qid: dict(list(scores.items())[:gar_seed_k]) for qid, scores in dense_run.items()}
+    gar_expanded_pools = run_gar_expansion(
+        seed_run=seed_run,
+        qrels=qrels,
+        corpus_graph_matrix=corpus_graph,
+        doc_ids_list=doc_ids,
+        depth=gar_depth,
+        alpha=gar_alpha,
+        expanded_k=gar_pool_k
+    )
+
+    # Convert expanded pools to mock candidate runs for Cross-Encoder re-scoring
+    gar_candidate_run = {}
+    for qid, cand_list in gar_expanded_pools.items():
+        gar_candidate_run[qid] = {did: float(1.0 / (idx + 1)) for idx, did in enumerate(cand_list)}
+
+    stage3_gar_run = run_cross_encoder_rerank(
+        passages=passages,
+        qrels=qrels,
+        candidate_run=gar_candidate_run,
+        model_name=ce_model_name,
+        top_k=ce_final_top_k,
+        batch_size=ce_batch_size
+    )
+
+    # 6. Evaluate all 3 stages using TREC evaluator
     metrics_to_eval = config["evaluation"]["metrics"]
     bm25_eval = evaluate_with_pytrec(qrels, bm25_run, metric_names=metrics_to_eval)
     dense_eval = evaluate_with_pytrec(qrels, dense_run, metric_names=metrics_to_eval)
+    stage2_eval = evaluate_with_pytrec(qrels, stage2_rerank_run, metric_names=metrics_to_eval)
+    stage3_eval = evaluate_with_pytrec(qrels, stage3_gar_run, metric_names=metrics_to_eval)
 
-    # 5. Output benchmark results summary table
+    # 7. Output benchmark results summary table comparing Stage 1 vs Stage 2 vs Stage 3 GAR
     print("\n================================================================================")
-    print("STAGE 1 INITIAL RETRIEVAL BENCHMARK RESULTS")
+    print("COMPARATIVE RAG vs CROSS-ENCODER & GAR BENCHMARK RESULTS")
     print("================================================================================")
-    print(f"{'Retriever Method':<30} | {'nDCG@10':<10} | {'Recall@10':<10} | {'Recall@100':<10} | {'Recall@1000':<10}")
+    print(f"{'Pipeline Stage':<35} | {'nDCG@10':<10} | {'Recall@10':<10} | {'Recall@100':<10}")
     print("-" * 80)
-    print(f"{'BM25s Lexical':<30} | {bm25_eval.get('ndcg_cut_10', 0):<10.4f} | {bm25_eval.get('recall_10', 0):<10.4f} | {bm25_eval.get('recall_100', 0):<10.4f} | {bm25_eval.get('recall_1000', 0):<10.4f}")
-    print(f"{'Reason-ModernColBERT Dense':<30} | {dense_eval.get('ndcg_cut_10', 0):<10.4f} | {dense_eval.get('recall_10', 0):<10.4f} | {dense_eval.get('recall_100', 0):<10.4f} | {dense_eval.get('recall_1000', 0):<10.4f}")
+    print(f"{'Stage 1: BM25s Lexical':<35} | {bm25_eval.get('ndcg_cut_10', 0):<10.4f} | {bm25_eval.get('recall_10', 0):<10.4f} | {bm25_eval.get('recall_100', 0):<10.4f}")
+    print(f"{'Stage 1: ModernColBERT Dense':<35} | {dense_eval.get('ndcg_cut_10', 0):<10.4f} | {dense_eval.get('recall_10', 0):<10.4f} | {dense_eval.get('recall_100', 0):<10.4f}")
+    print(f"{'Stage 2: Static Cross-Encoder':<35} | {stage2_eval.get('ndcg_cut_10', 0):<10.4f} | {stage2_eval.get('recall_10', 0):<10.4f} | {stage2_eval.get('recall_100', 0):<10.4f}")
+    print(f"{'Stage 3: Graph-Adaptive (GAR)':<35} | {stage3_eval.get('ndcg_cut_10', 0):<10.4f} | {stage3_eval.get('recall_10', 0):<10.4f} | {stage3_eval.get('recall_100', 0):<10.4f}")
     print("================================================================================")
 
-    # 6. Save JSON results file (save corpus-specific benchmark files to preserve 1k and 62k metrics)
+    # 8. Save JSON results files
     corpus_size = len(passages)
     suffix = "62k" if corpus_size > 1000 else "1k"
-    specific_output_path = os.path.join(output_dir, f"stage1_retrieval_results_{suffix}.json")
+    
+    stage2_file = os.path.join(output_dir, f"stage2_rerank_results_{suffix}.json")
+    stage3_file = os.path.join(output_dir, f"stage3_gar_results_{suffix}.json")
     master_output_path = os.path.join(output_dir, "stage1_retrieval_results.json")
 
-    results_data = {
-        "stage": "Stage 1 - Initial Retrieval Baselines",
-        "dataset": config["dataset"]["subset"],
-        "num_queries": len(qrels),
+    stage2_data = {
+        "stage": "Stage 2 - Static Cross-Encoder Re-Ranking",
+        "model": ce_model_name,
         "corpus_size": corpus_size,
-        "metrics": {
-            "BM25s_Lexical": bm25_eval,
-            "ModernColBERT_Dense": dense_eval
-        }
+        "metrics": stage2_eval
+    }
+    stage3_data = {
+        "stage": "Stage 3 - Graph-Adaptive Re-Ranking (GAR)",
+        "model": ce_model_name,
+        "corpus_size": corpus_size,
+        "metrics": stage3_eval
     }
 
-    with open(specific_output_path, "w", encoding="utf-8") as f:
-        json.dump(results_data, f, indent=2)
-    print(f"\n[+] Specific results saved to '{specific_output_path}'")
+    with open(stage2_file, "w", encoding="utf-8") as f:
+        json.dump(stage2_data, f, indent=2)
+    with open(stage3_file, "w", encoding="utf-8") as f:
+        json.dump(stage3_data, f, indent=2)
 
-    # Update or merge master JSON with both 1k and 62k benchmarks
-    master_data = {}
-    if os.path.exists(master_output_path):
-        try:
-            with open(master_output_path, "r", encoding="utf-8") as f:
-                master_data = json.load(f)
-        except Exception:
-            master_data = {}
-
-    master_data[f"corpus_{suffix}"] = results_data
-    with open(master_output_path, "w", encoding="utf-8") as f:
-        json.dump(master_data, f, indent=2)
-    print(f"[+] Master results updated at '{master_output_path}'")
+    print(f"\n[+] Stage 2 results saved to '{stage2_file}'")
+    print(f"[+] Stage 3 GAR results saved to '{stage3_file}'")
 
 
 if __name__ == "__main__":
