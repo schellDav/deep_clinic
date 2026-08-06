@@ -13,6 +13,7 @@ Phase 4: Static Re-Ranking & GAR Integration   [IN PROGRESS]
 Phase 5: Quantitative IR Evaluation            [PENDING]
 Phase 6: End-to-End LLM & RAGAS Analysis       [PENDING]
 Phase 7: Visualization & Report Synthesis      [PENDING]
+Ablation: Full 62k Corpus Scaling Experiment   [OPTIONAL SLURM BACKGROUND JOB]
 
 ================================================================================
 COMPLETED WORK
@@ -41,6 +42,7 @@ Phase 3: Stage 1 — Initial Retrieval Baselines (BM25s & Dense)
 - Executed Reason-ModernColBERT dense vector similarity search (nDCG@10: 0.9685, Recall@10: 0.9940, Recall@100: 1.0000).
 - Evaluated metrics using pytrec_eval and native Python fallback.
 - Saved benchmark metrics to outputs/stage1_retrieval_results.json.
+- Created automated test suite (tests/test_phase2.py, tests/test_phase3.py, tests/test_all_phases.py).
 
 ================================================================================
 CURRENT STEP
@@ -50,3 +52,11 @@ Phase 4: Stage 2 & 3 — Static Re-Ranking & GAR Integration
 - Extend src/retrieve_and_rerank.py to add Static Re-Ranking (Cross-Encoder / monoT5).
 - Implement Graph-Adaptive Re-Ranking (GAR) candidate pool expansion via multi-hop traversal on corpus_graph.npz.
 - Compare candidates and re-ranking accuracy across all 3 retrieval stages.
+
+================================================================================
+BACKGROUND / SLURM ABLATION STUDY TRACKER
+================================================================================
+- Optional 62k Full Corpus Scaling Job:
+  * Script: scripts/slurm/04_full_corpus_ablation.sh
+  * Slurm execution: sbatch scripts/slurm/04_full_corpus_ablation.sh
+  * Objective: Evaluates 1,000 queries against full 62,249 expanded abstracts (pqa_labeled + pqa_unlabeled) in background on KISSKI GPU cluster.

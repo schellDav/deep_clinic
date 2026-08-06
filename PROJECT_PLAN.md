@@ -66,6 +66,7 @@
 ### Phase 5: Quantitative Retrieval Evaluation & Comparison
 1. Benchmark 3 pipeline stages: Standard Retrieval vs. Static Re-Ranking vs. GAR.
 2. Compare retrieval precision, recall trade-offs, and multi-hop neighbor discovery gains.
+3. **Optional Background Ablation (Full 62k Corpus Scaling):** Run `scripts/slurm/04_full_corpus_ablation.sh` on KISSKI GPU cluster to measure GAR precision gain over 62,249 expanded PubMed abstracts.
 
 ### Phase 6: End-to-End LLM & RAGAS Analysis (PRIORITIZED LAST)
 1. Feed retrieved Top-N context passages into `Llama-3B-Instruct`.

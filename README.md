@@ -36,6 +36,7 @@ Project/
 │       ├── 01_build_graph.sh   # Build PubMedQA corpus graph
 │       ├── 02_retrieve_gar.sh  # Run retrieval, GAR expansion, and re-ranking
 │       ├── 03_eval_ragas.sh    # Run LLM generation and RAGAS evaluation
+│       ├── 04_full_corpus_ablation.sh # Optional 62k full corpus scaling ablation
 │       └── submit_all.sh       # Master Slurm job orchestrator (dependency chaining)
 ├── src/                        # Core Python source package
 │   ├── __init__.py
