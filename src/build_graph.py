@@ -117,24 +117,35 @@ def load_pubmedqa_corpus(subset: str = "pqa_labeled", max_passages: int = None) 
             f.write(content)
         print(f"[+] Cached PubMedQA labeled dataset locally to '{local_json_path}'.")
 
-    # If max_passages > 1000 or subset == "full", load unlabeled abstracts (ori_pqau.json) as distractors
+    # If max_passages > 1000 or subset == "full", load unlabeled abstracts (61k abstracts) as distractors
     if (max_passages is not None and max_passages > 1000) or subset in ["pqa_unlabeled", "full"]:
-        local_unlabeled_path = os.path.join(data_dir, "ori_pqau.json")
-        if os.path.exists(local_unlabeled_path):
-            print(f"[+] Found cached PubMedQA unlabeled file at '{local_unlabeled_path}'.")
-            with open(local_unlabeled_path, "r", encoding="utf-8") as f:
-                raw_data.update(json.load(f))
-        else:
-            url_u = "https://raw.githubusercontent.com/pubmedqa/pubmedqa/master/data/ori_pqau.json"
-            print(f"[+] Downloading official PubMedQA unlabeled distractor data (61k abstracts) from '{url_u}'...")
-            import urllib.request
-            with urllib.request.urlopen(url_u) as response:
-                content_u = response.read().decode("utf-8")
-                unlabeled_json = json.loads(content_u)
-                raw_data.update(unlabeled_json)
-            with open(local_unlabeled_path, "w", encoding="utf-8") as f:
-                f.write(content_u)
+        local_unlabeled_path = os.path.join(data_dir, "pqa_unlabeled.parquet")
+        import pandas as pd
+        if not os.path.exists(local_unlabeled_path):
+            url_u = "https://huggingface.co/datasets/qiaojin/PubMedQA/resolve/main/pqa_unlabeled/train-00000-of-00001.parquet"
+            print(f"[+] Downloading official PubMedQA unlabeled distractor data (61k abstracts) from HuggingFace...")
+            df_u = pd.read_parquet(url_u)
+            df_u.to_parquet(local_unlabeled_path)
             print(f"[+] Cached PubMedQA unlabeled dataset locally to '{local_unlabeled_path}'.")
+        else:
+            print(f"[+] Found cached PubMedQA unlabeled file at '{local_unlabeled_path}'.")
+            df_u = pd.read_parquet(local_unlabeled_path)
+
+        # Merge parquet rows into raw_data dictionary format
+        for _, row in df_u.iterrows():
+            pubid = str(row["pubid"])
+            context_data = row["context"]
+            if isinstance(context_data, dict):
+                contexts = context_data.get("contexts", [])
+            elif hasattr(context_data, "tolist"):
+                contexts = context_data.tolist()
+            else:
+                contexts = context_data
+            raw_data[pubid] = {
+                "QUESTION": str(row.get("question", "") or ""),
+                "CONTEXTS": contexts,
+                "LONG_ANSWER": str(row.get("long_answer", "") or "")
+            }
 
     passages = []
     qrels = {}
