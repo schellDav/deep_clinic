@@ -33,7 +33,7 @@ mkdir -p logs outputs data/full_62k cache/full_62k
 echo "[+] Step 1: Building Full 62k Corpus Graph (62,249 abstracts)..."
 python3 -m src.build_graph --config config/default_config.yaml --max_passages 62249
 
-echo "[+] Step 2: Running 62k Full Corpus Retrieval, GAR Expansion & Cross-Encoder Re-Ranking..."
+echo "[+] Step 2: Running 62k Full Corpus Stage 1 Initial Retrieval (BM25s & ModernColBERT)..."
 python3 -m src.retrieve_and_rerank --config config/default_config.yaml
 
 echo "=== Completed Background Job: 62k Full Corpus Ablation ==="
