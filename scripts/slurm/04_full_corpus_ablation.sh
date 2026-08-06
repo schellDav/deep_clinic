@@ -3,8 +3,9 @@
 #SBATCH --output=logs/%x_%j.out
 #SBATCH --error=logs/%x_%j.err
 #SBATCH --account=kisski-arbscg
-#SBATCH --partition=grete
-#SBATCH --gpus=a100:1
+#SBATCH --partition=kisski
+#SBATCH --gpus=A100:1
+#SBATCH --constraint=80gb_vram
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
 #SBATCH --time=08:00:00
