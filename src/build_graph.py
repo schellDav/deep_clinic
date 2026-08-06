@@ -218,7 +218,12 @@ def compute_dense_embeddings(passages: List[Dict[str, Any]], model_name: str = "
             _test_tensor = torch.ones((1, 1), device="cuda")
         except Exception:
             print("[!] CUDA sm_120 kernel error detected on local GPU. Falling back to CPU for embedding computation...")
-            device = "cpu"
+    if device == "cpu":
+        import os
+        num_threads = min(16, os.cpu_count() or 8)
+        torch.set_num_threads(num_threads)
+        batch_size = max(batch_size, 128)
+        print(f"[+] Optimized CPU execution: PyTorch num_threads set to {num_threads}, batch_size={batch_size}")
     print(f"[+] Computing on device: {device.upper()}")
 
     # Load model and tokenizer directly from Hugging Face Hub (strict loading)

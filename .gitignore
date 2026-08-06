@@ -12,6 +12,8 @@ ENV/
 
 # Data & Models
 data/
+cache/
+*.npy
 *.bin
 *.pt
 *.safetensors
