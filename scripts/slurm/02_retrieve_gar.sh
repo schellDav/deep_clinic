@@ -2,6 +2,7 @@
 #SBATCH --job-name=rag_02_retrieve_gar
 #SBATCH --output=logs/%x_%j.out
 #SBATCH --error=logs/%x_%j.err
+#SBATCH --account=kisski-arbscg
 #SBATCH --partition=grete
 #SBATCH --gpus=a100:1
 #SBATCH --cpus-per-task=4
