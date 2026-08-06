@@ -34,7 +34,11 @@ Project/
 ├── outputs/                    # Evaluation benchmark results (.json)
 │   ├── stage1_retrieval_results.json
 │   ├── stage1_retrieval_results_1k.json
-│   └── stage1_retrieval_results_62k.json
+│   ├── stage1_retrieval_results_62k.json
+│   ├── stage2_rerank_results_1k.json
+│   ├── stage2_rerank_results_62k.json
+│   ├── stage3_gar_results_1k.json
+│   └── stage3_gar_results_62k.json
 ├── scripts/
 │   ├── setup_env.sh            # Helper script to initialize virtual environment
 │   └── slurm/                  # HPC Slurm batch execution scripts
