@@ -237,6 +237,126 @@ def run_dense_retrieval(
     return run_dict
 
 
+def run_cross_encoder_rerank(
+    passages: List[Dict[str, Any]],
+    qrels: Dict[str, Any],
+    candidate_run: Dict[str, Dict[str, float]],
+    model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    top_k: int = 10,
+    batch_size: int = 16
+) -> Dict[str, Dict[str, float]]:
+    """
+    Execute Stage 2 Static Cross-Encoder Re-Ranking over candidate passage pools.
+
+    Args:
+        passages (List[Dict[str, Any]]): Passage corpus list.
+        qrels (Dict[str, Any]): Ground-truth QA dictionary containing questions.
+        candidate_run (Dict[str, Dict[str, float]]): Stage 1 initial candidate run dictionary.
+        model_name (str): Hugging Face Cross-Encoder model identifier.
+        top_k (int): Number of top re-ranked passages to return per query.
+        batch_size (int): Mini-batch size for transformer cross-attention scoring.
+
+    Returns:
+        Dict[str, Dict[str, float]]: Re-ranked run dictionary {query_id: {doc_id: cross_encoder_score}}.
+    """
+    print(f"[+] Executing Cross-Encoder Re-Ranking with model '{model_name}'...")
+    from sentence_transformers import CrossEncoder
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    if device == "cuda":
+        try:
+            _ = torch.arange(2, device="cuda")
+        except Exception:
+            print("[!] CUDA sm_120 compatibility error detected. Falling back to CPU for Cross-Encoder...")
+            device = "cpu"
+
+    model = CrossEncoder(model_name, device=device)
+
+    # Fast lookup map doc_id -> passage text
+    doc_map = {str(p["doc_id"]): p["text"] for p in passages}
+
+    reranked_run = {}
+    for qid, candidate_scores in tqdm(candidate_run.items(), desc="Cross-Encoder Re-Ranking"):
+        question = qrels.get(qid, {}).get("question", "")
+        cand_doc_ids = list(candidate_scores.keys())
+
+        pairs = [(question, doc_map.get(doc_id, "")) for doc_id in cand_doc_ids]
+        if not pairs:
+            continue
+
+        scores = model.predict(pairs, batch_size=batch_size, show_progress_bar=False)
+
+        # Sort candidate doc_ids by Cross-Encoder score descending
+        sorted_pairs = sorted(zip(cand_doc_ids, scores), key=lambda x: x[1], reverse=True)[:top_k]
+
+        query_rerank = {doc_id: float(score) for doc_id, score in sorted_pairs}
+        reranked_run[qid] = query_rerank
+
+    print(f"[+] Cross-Encoder Re-Ranking finished for {len(reranked_run)} queries.")
+    return reranked_run
+
+
+def run_gar_expansion(
+    seed_run: Dict[str, Dict[str, float]],
+    corpus_graph_matrix: sp.csr_matrix,
+    doc_ids_list: List[str],
+    depth: int = 2,
+    alpha: float = 0.5,
+    expanded_k: int = 100
+) -> Dict[str, List[str]]:
+    """
+    Execute Stage 3 Graph-Adaptive Re-Ranking (GAR) multi-hop candidate pool expansion.
+
+    Args:
+        seed_run (Dict[str, Dict[str, float]]): Top N=20 seed candidates from Stage 1.
+        corpus_graph_matrix (sp.csr_matrix): Pre-computed hybrid similarity Corpus Graph (SciPy CSR).
+        doc_ids_list (List[str]): Ordered document ID mapping matching corpus_graph_matrix rows/cols.
+        depth (int): Multi-hop graph traversal depth (default: 2 hops).
+        alpha (float): Score decay factor per graph hop (default: 0.5).
+        expanded_k (int): Target expanded candidate pool size per query.
+
+    Returns:
+        Dict[str, List[str]]: Expanded candidate document ID lists {query_id: [doc_id_1, doc_id_2, ...]}.
+    """
+    print(f"[+] Executing GAR Candidate Expansion (depth={depth}, alpha={alpha}, target_k={expanded_k})...")
+    doc_id_to_idx = {str(did): idx for idx, did in enumerate(doc_ids_list)}
+    idx_to_doc_id = {idx: str(did) for idx, did in enumerate(doc_ids_list)}
+
+    expanded_candidates = {}
+
+    for qid, seed_scores in seed_run.items():
+        # Map seed candidate doc_ids to matrix node indices
+        seed_indices = [doc_id_to_idx[did] for did in seed_scores.keys() if did in doc_id_to_idx]
+        if not seed_indices:
+            expanded_candidates[qid] = list(seed_scores.keys())
+            continue
+
+        # Initial seed score vector v0
+        num_nodes = corpus_graph_matrix.shape[0]
+        v_current = np.zeros(num_nodes, dtype=np.float32)
+        for did, score in seed_scores.items():
+            if did in doc_id_to_idx:
+                v_current[doc_id_to_idx[did]] = max(score, 1e-4)
+
+        v_accumulated = v_current.copy()
+        current_weight = 1.0
+
+        # Multi-hop matrix graph traversal: v_{t+1} = v_t * A
+        for hop in range(1, depth + 1):
+            current_weight *= alpha
+            v_current = corpus_graph_matrix.dot(v_current)
+            v_accumulated += current_weight * v_current
+
+        # Extract top expanded_k node indices with highest accumulated graph scores
+        top_k_indices = np.argsort(v_accumulated)[-expanded_k:][::-1]
+        expanded_doc_ids = [idx_to_doc_id[idx] for idx in top_k_indices if v_accumulated[idx] > 0]
+
+        expanded_candidates[qid] = expanded_doc_ids
+
+    print(f"[+] GAR Expansion finished for {len(expanded_candidates)} queries.")
+    return expanded_candidates
+
+
 def evaluate_with_pytrec(
     qrels: Dict[str, Any],
     run_dict: Dict[str, Dict[str, float]],

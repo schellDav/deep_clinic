@@ -8,6 +8,7 @@ Aggregates and executes unit and integration tests across all completed project 
 Covered Phases:
     - Phase 2: Corpus Ingestion & Corpus-Graph Construction
     - Phase 3: Stage 1 Initial Retrieval Baselines & TREC Evaluation
+    - Phase 4: Stage 2 Cross-Encoder & Stage 3 GAR Candidate Expansion
 """
 
 import sys
@@ -15,6 +16,7 @@ import unittest
 
 from tests.test_phase2 import TestPhase2Implementation
 from tests.test_phase3 import TestPhase3Implementation
+from tests.test_phase4 import TestPhase4Implementation
 
 
 def suite():
@@ -23,6 +25,7 @@ def suite():
     test_suite = unittest.TestSuite()
     test_suite.addTests(loader.loadTestsFromTestCase(TestPhase2Implementation))
     test_suite.addTests(loader.loadTestsFromTestCase(TestPhase3Implementation))
+    test_suite.addTests(loader.loadTestsFromTestCase(TestPhase4Implementation))
     return test_suite
 
 
