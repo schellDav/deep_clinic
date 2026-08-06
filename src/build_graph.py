@@ -211,6 +211,14 @@ def compute_dense_embeddings(passages: List[Dict[str, Any]], model_name: str = "
     """
     print(f"[+] Generating dense embeddings using transformer model '{model_name}'...")
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    if device == "cuda":
+        try:
+            # Test dummy tensor operation to detect sm_120 Blackwell kernel image error
+            _ = torch.arange(2, device="cuda")
+            _test_tensor = torch.ones((1, 1), device="cuda")
+        except Exception:
+            print("[!] CUDA sm_120 kernel error detected on local GPU. Falling back to CPU for embedding computation...")
+            device = "cpu"
     print(f"[+] Computing on device: {device.upper()}")
 
     # Load model and tokenizer directly from Hugging Face Hub (strict loading)
@@ -233,7 +241,17 @@ def compute_dense_embeddings(passages: List[Dict[str, Any]], model_name: str = "
                 return_tensors="pt"
             ).to(device)
 
-            outputs = model(**encoded)
+            try:
+                outputs = model(**encoded)
+            except RuntimeError as e:
+                if "CUDA error" in str(e) or "kernel image" in str(e):
+                    print(f"\n[!] CUDA execution error on device. Switching model to CPU...")
+                    device = "cpu"
+                    model = model.to("cpu")
+                    encoded = {k: v.to("cpu") for k, v in encoded.items()}
+                    outputs = model(**encoded)
+                else:
+                    raise e
 
             # Pooling strategy selection: sentence_embedding > pooler_output > mean pooling
             if hasattr(outputs, "sentence_embedding"):
