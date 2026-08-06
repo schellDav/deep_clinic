@@ -2,8 +2,8 @@
 #SBATCH --job-name=rag_04_full_corpus_ablation
 #SBATCH --output=logs/%x_%j.out
 #SBATCH --error=logs/%x_%j.err
-#SBATCH --partition=gpu
-#SBATCH --gpus=1
+#SBATCH --partition=grete
+#SBATCH --gpus=a100:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
 #SBATCH --time=08:00:00
