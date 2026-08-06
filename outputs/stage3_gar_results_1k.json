@@ -1,0 +1,11 @@
+{
+  "stage": "Stage 3 - Graph-Adaptive Re-Ranking (GAR)",
+  "model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+  "corpus_size": 1000,
+  "metrics": {
+    "ndcg_cut_10": 0.9874030219424942,
+    "recall_10": 0.996,
+    "recall_100": 0.996,
+    "recall_1000": 0.996
+  }
+}

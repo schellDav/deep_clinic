@@ -49,6 +49,12 @@ def parse_args() -> argparse.Namespace:
         default="config/default_config.yaml",
         help="Path to YAML configuration file."
     )
+    parser.add_argument(
+        "--max_passages",
+        type=int,
+        default=None,
+        help="Optional maximum number of passages to evaluate (e.g. 1000 for 1k corpus)."
+    )
     return parser.parse_args()
 
 
@@ -97,11 +103,15 @@ def load_artifacts(data_dir: str = "data", cache_dir: str = "cache") -> Tuple[Li
     with open(qrels_path, "r", encoding="utf-8") as f:
         raw_qrels = json.load(f)
 
-    # Filter qrels to only expert QA test questions (1,000 items)
-    qrels = {}
-    for qid, data in raw_qrels.items():
-        if data.get("question", "").strip() and "relevant_doc_ids" in data:
-            qrels[qid] = data
+    # Filter qrels to exact expert QA test questions from ori_pqal.json (1,000 items)
+    local_pqal_path = os.path.join(data_dir, "ori_pqal.json")
+    if os.path.exists(local_pqal_path):
+        with open(local_pqal_path, "r", encoding="utf-8") as f:
+            pqal_dict = json.load(f)
+        pqal_qids = set(str(k) for k in pqal_dict.keys())
+        qrels = {qid: data for qid, data in raw_qrels.items() if str(qid) in pqal_qids}
+    else:
+        qrels = {qid: data for qid, data in raw_qrels.items() if data.get("question", "").strip() and "relevant_doc_ids" in data}
 
     with open(doc_ids_path, "r", encoding="utf-8") as f:
         doc_ids = json.load(f)
@@ -461,6 +471,16 @@ def main() -> None:
 
     # 1. Load artifacts
     passages, qrels, doc_ids, passage_embeddings, corpus_graph = load_artifacts(data_dir, cache_dir)
+
+    max_p = args.max_passages or config["dataset"].get("max_passages")
+    if max_p is not None and max_p < len(passages):
+        print(f"[+] Slicing dataset to top {max_p} passages for 1k corpus benchmark...")
+        passages = passages[:max_p]
+        doc_ids = doc_ids[:max_p]
+        passage_embeddings = passage_embeddings[:max_p]
+        corpus_graph = corpus_graph[:max_p, :max_p]
+        valid_doc_set = set(doc_ids)
+        qrels = {qid: d for qid, d in qrels.items() if qid in valid_doc_set}
 
     # 2. Run Stage 1 Lexical Retrieval (BM25s)
     bm25_top_k = config["retrieval"]["lexical"]["top_k"]
