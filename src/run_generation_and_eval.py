@@ -94,8 +94,14 @@ def main() -> None:
     os.makedirs(log_dir, exist_ok=True)
 
     try:
-        # 1. Load artifacts
-        passages, qrels, doc_ids, passage_embeddings, corpus_graph = load_artifacts(data_dir, cache_dir)
+        # 1. Load artifacts (with automatic building if missing)
+        try:
+            passages, qrels, doc_ids, passage_embeddings, corpus_graph = load_artifacts(data_dir, cache_dir)
+        except FileNotFoundError as err:
+            print(f"[!] Dataset artifacts missing ({err}). Auto-generating graph & embeddings...", file=sys.stderr)
+            from src.build_graph import build_corpus_and_graph
+            build_corpus_and_graph(config)
+            passages, qrels, doc_ids, passage_embeddings, corpus_graph = load_artifacts(data_dir, cache_dir)
 
         max_p = args.max_passages or config["dataset"].get("max_passages")
         if max_p is not None and max_p < len(passages):
