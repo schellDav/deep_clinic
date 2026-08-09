@@ -25,17 +25,26 @@ echo "CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES:-none}"
 # module load cuda/12.1
 # module load python/3.10
 
-# Activate Python Environment
+# Source Conda Environment
+for conda_path in "$HOME/miniconda3" "$HOME/anaconda3" "$HOME/conda" "/opt/conda" "$HOME/mambaforge"; do
+    if [ -f "$conda_path/etc/profile.d/conda.sh" ]; then
+        source "$conda_path/etc/profile.d/conda.sh"
+        break
+    fi
+done
+
 if command -v conda &> /dev/null; then
-    eval "$(conda shell.bash hook)" 2>/dev/null || true
     conda activate deep_clinic_rag 2>/dev/null || source activate deep_clinic_rag 2>/dev/null || true
 elif [ -f ".venv/bin/activate" ]; then
     source .venv/bin/activate
 fi
 
+PYTHON_BIN=$(which python 2>/dev/null || which python3 2>/dev/null)
+echo "[+] Using Python interpreter: $PYTHON_BIN"
+
 mkdir -p logs data outputs cache
 
 echo "[+] Executing corpus graph building script..."
-python3 -m src.build_graph --config config/default_config.yaml
+$PYTHON_BIN -m src.build_graph --config config/default_config.yaml
 
 echo "=== Completed Job: Corpus Graph Construction ==="
