@@ -20,12 +20,12 @@ set -e
 echo "=== Starting Slurm Job: Retrieval, GAR & Re-Ranking ==="
 echo "Node: $(hostname)"
 echo "Date: $(date)"
-
-# Load KISSKI Environment Modules & Activate Python Virtual Environment
-module load gcc/13.2.0 python/3.11.9 2>/dev/null || true
+echo "CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES:-none}"
 
 # Load Conda or Virtual Environment Python Interpreter
-if [ -x "$HOME/miniconda3/envs/deep_clinic_rag/bin/python" ]; then
+if [ -x "$HOME/.conda/envs/deep_clinic_rag/bin/python" ]; then
+    PYTHON_EXEC="$HOME/.conda/envs/deep_clinic_rag/bin/python"
+elif [ -x "$HOME/miniconda3/envs/deep_clinic_rag/bin/python" ]; then
     PYTHON_EXEC="$HOME/miniconda3/envs/deep_clinic_rag/bin/python"
 elif [ -x "./.venv/bin/python" ]; then
     PYTHON_EXEC="./.venv/bin/python"
@@ -35,6 +35,9 @@ elif [ -f ".venv/bin/activate" ]; then
 else
     PYTHON_EXEC="python3"
 fi
+
+echo "[+] Using Python Interpreter: $PYTHON_EXEC"
+$PYTHON_EXEC -c "import sys, numpy; print('[+] Environment Verified:', sys.version, '| NumPy:', numpy.__version__)"
 
 mkdir -p logs outputs
 

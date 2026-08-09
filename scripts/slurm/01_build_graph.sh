@@ -21,12 +21,10 @@ echo "Node: $(hostname)"
 echo "Date: $(date)"
 echo "CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES:-none}"
 
-# Load environment modules (uncomment/modify according to HPC cluster setup)
-# module load cuda/12.1
-# module load python/3.10
-
 # Load Conda or Virtual Environment Python Interpreter
-if [ -x "$HOME/miniconda3/envs/deep_clinic_rag/bin/python" ]; then
+if [ -x "$HOME/.conda/envs/deep_clinic_rag/bin/python" ]; then
+    PYTHON_EXEC="$HOME/.conda/envs/deep_clinic_rag/bin/python"
+elif [ -x "$HOME/miniconda3/envs/deep_clinic_rag/bin/python" ]; then
     PYTHON_EXEC="$HOME/miniconda3/envs/deep_clinic_rag/bin/python"
 elif [ -x "./.venv/bin/python" ]; then
     PYTHON_EXEC="./.venv/bin/python"
@@ -36,6 +34,9 @@ elif [ -f ".venv/bin/activate" ]; then
 else
     PYTHON_EXEC="python3"
 fi
+
+echo "[+] Using Python Interpreter: $PYTHON_EXEC"
+$PYTHON_EXEC -c "import sys, numpy; print('[+] Environment Verified:', sys.version, '| NumPy:', numpy.__version__)"
 
 mkdir -p logs data outputs cache
 
