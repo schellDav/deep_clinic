@@ -35,7 +35,7 @@
    - **Key Metrics:** *Faithfulness* (hallucination detection) and *Answer Relevance*.
 
 ### D. Compute Infrastructure & Workload Management
-- **Local Development:** NVIDIA RTX 5060 (16 GB VRAM).
+- **Local Development:** NVIDIA RTX 5060 Ti (16 GB VRAM).
 - **Cluster Resource:** **KISSKI GPU Cluster** ([KISSKI Training Platform](https://kisski.gwdg.de/en/leistungen/2-01-01_trainingsplattform/)) for corpus graph indexing and large model inference.
 - **Workload Manager / Job Scheduler:** **Slurm** cluster environment for high-performance computing (`sbatch` job submission, GPU resource requests `#SBATCH --gpus=...`, log redirection, job execution pipelines).
 
