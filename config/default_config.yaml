@@ -41,7 +41,7 @@ cross_encoder_reranking:
   final_top_k: 10
 
 generation:
-  model_name: "Qwen/Qwen3-30B-A3B-Instruct-2507"
+  model_name: "google/gemma-4-12B-it"
   max_new_tokens: 256
   temperature: 0.1
 
@@ -52,7 +52,7 @@ evaluation:
     - recall_100
     - recall_1000
   ragas:
-    judge_model_name: "openai/gpt-oss-120b"
+    judge_model_name: "Qwen/Qwen3-30B-A3B-Instruct-2507"
     metrics:
       - faithfulness
       - answer_relevance
