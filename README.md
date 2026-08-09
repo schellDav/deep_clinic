@@ -51,14 +51,18 @@ Project/
 │   ├── __init__.py
 │   ├── build_graph.py          # Corpus ingestion, embedding & graph builder
 │   ├── evaluator.py            # TREC metric evaluation functions (pytrec_eval)
+│   ├── preload_models.py       # Model pre-caching utility for offline HPC worker nodes
+│   ├── ragas_eval.py           # Stage 4 RAGAS evaluation module
 │   ├── rerankers.py            # Stage 2 Cross-Encoder & Stage 3 GAR re-ranking
 │   ├── retrievers.py           # Stage 1 BM25s lexical & ModernColBERT dense search
-│   └── retrieve_and_rerank.py  # Master pipeline execution CLI entrypoint
+│   ├── retrieve_and_rerank.py  # Stage 1-3 pipeline execution entrypoint
+│   └── run_generation_and_eval.py # Stage 4 end-to-end LLM & RAGAS entrypoint
 ├── tests/                      # Automated test suite
 │   ├── test_all_phases.py      # Master test runner
 │   ├── test_phase2.py          # Phase 2 graph construction unit tests
 │   ├── test_phase3.py          # Phase 3 retrieval baseline unit tests
-│   └── test_phase4.py          # Phase 4 Cross-Encoder & GAR unit tests
+│   ├── test_phase4.py          # Phase 4 Cross-Encoder & GAR unit tests
+│   └── test_phase5.py          # Phase 5 end-to-end LLM & RAGAS unit tests
 ├── environment.yml             # Conda environment definition
 ├── PROGRESS.md                 # Minimal functional progress tracker log
 ├── PROJECT_PLAN.md             # Detailed project specification & execution plan
@@ -70,17 +74,27 @@ Project/
 
 ## 3. Environment Setup
 
-Execute the setup helper script on the cluster head node (KISSKI GPU Cluster):
+Execute the setup helper script on the cluster login node (`glogin10` / KISSKI GPU Cluster):
 
 ```bash
+module load gcc/13.2.0 python/3.11.9
 chmod +x scripts/setup_env.sh
 ./scripts/setup_env.sh
+source .venv/bin/activate
 ```
 
 ---
 
 ## 4. Slurm Cluster Execution (KISSKI Platform)
 
+### Step 0: Pre-cache Models on Login Node (Internet Connection Required)
+Because HPC GPU compute worker nodes do not have outbound internet access, pre-download model weights on the login node first:
+
+```bash
+python -m src.preload_models
+```
+
+### Step 1: Submit Slurm Pipeline Jobs
 Submit individual pipeline stages via Slurm:
 
 ```bash
