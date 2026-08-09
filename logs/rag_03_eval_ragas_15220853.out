@@ -1,0 +1,13 @@
+=== Starting Slurm Job: LLM Generation & RAGAS Evaluation ===
+Node: ggpu181
+Date: Sun Aug  9 13:16:06 CEST 2026
+CUDA_VISIBLE_DEVICES: 0
+[+] Executing Stage 4 LLM Generation & RAGAS Analysis...
+============ Job Information ===================================================
+Submitted: 2026-08-09T13:15:12
+Started: 2026-08-09T13:15:43
+Ended: 2026-08-09T13:16:07
+Elapsed: 1 min, Limit: 360 min, Difference: 359 min
+CPUs: 8, Nodes: 1
+Estimated credit Consumption: 2.50 core-hours
+================================================================================

@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/usr/lib64/python3.6/runpy.py", line 183, in _run_module_as_main
+    mod_name, mod_spec, code = _get_module_details(mod_name, _Error)
+  File "/usr/lib64/python3.6/runpy.py", line 109, in _get_module_details
+    __import__(pkg_name)
+  File "/mnt/vast-kisski/home/david.schell/u29560/deep_clinic/src/__init__.py", line 5, in <module>
+    from src.retrievers import run_bm25_retrieval, run_dense_retrieval
+  File "/mnt/vast-kisski/home/david.schell/u29560/deep_clinic/src/retrievers.py", line 10, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'

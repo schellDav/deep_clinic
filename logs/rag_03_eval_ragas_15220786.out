@@ -1,0 +1,12 @@
+=== Starting Slurm Job: LLM Generation & RAGAS Evaluation ===
+Node: ggpu170
+Date: Sun Aug  9 13:13:25 CEST 2026
+[+] Executing end-to-end LLM generation and RAGAS evaluation...
+============ Job Information ===================================================
+Submitted: 2026-08-09T13:12:57
+Started: 2026-08-09T13:13:03
+Ended: 2026-08-09T13:13:26
+Elapsed: 1 min, Limit: 240 min, Difference: 239 min
+CPUs: 4, Nodes: 1
+Estimated credit Consumption: 2.50 core-hours
+================================================================================
