@@ -19,21 +19,30 @@ def main():
 
     cross_encoder_name = config["cross_encoder_reranking"]["model_name"]
     generator_name = config["generation"]["model_name"]
+    judge_name = config["evaluation"]["ragas"]["judge_model_name"]
 
-    print(f"\n[1/2] Pre-downloading Cross-Encoder model '{cross_encoder_name}'...")
+    print(f"\n[1/3] Pre-downloading Cross-Encoder model '{cross_encoder_name}'...")
     try:
         CrossEncoder(cross_encoder_name)
         print(f"[+] Successfully cached Cross-Encoder '{cross_encoder_name}'.")
     except Exception as e:
         print(f"[!] Error pre-downloading Cross-Encoder: {e}", file=sys.stderr)
 
-    print(f"\n[2/2] Pre-downloading Generator LLM '{generator_name}'...")
+    print(f"\n[2/3] Pre-downloading Generator LLM '{generator_name}'...")
     try:
         AutoTokenizer.from_pretrained(generator_name)
         AutoModelForCausalLM.from_pretrained(generator_name)
         print(f"[+] Successfully cached Generator LLM '{generator_name}'.")
     except Exception as e:
         print(f"[!] Error pre-downloading Generator LLM: {e}", file=sys.stderr)
+
+    print(f"\n[3/3] Pre-downloading RAGAS Judge Model '{judge_name}'...")
+    try:
+        AutoTokenizer.from_pretrained(judge_name)
+        AutoModelForCausalLM.from_pretrained(judge_name)
+        print(f"[+] Successfully cached RAGAS Judge Model '{judge_name}'.")
+    except Exception as e:
+        print(f"[!] Info: RAGAS Judge pre-download notice: {e}", file=sys.stderr)
 
     print("\n=== Model Pre-Caching Complete ===")
 
