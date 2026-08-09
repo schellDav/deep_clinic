@@ -23,9 +23,12 @@ echo "Node: $(hostname)"
 echo "Date: $(date)"
 echo "CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES:-none}"
 
-# Activate Conda Environment
-source ~/.bashrc 2>/dev/null || true
-conda activate deep_clinic_rag 2>/dev/null || source activate deep_clinic_rag 2>/dev/null || true
+# Load KISSKI Environment Modules & Activate Python Virtual Environment
+module load gcc/13.2.0 python/3.11.9 2>/dev/null || true
+
+if [ -f ".venv/bin/activate" ]; then
+    source .venv/bin/activate
+fi
 
 mkdir -p logs outputs data/full_62k cache/full_62k
 
