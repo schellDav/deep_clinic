@@ -1,20 +1,32 @@
 {
   "stage": "Stage 1 - Initial Retrieval Baselines",
   "dataset": "pqa_labeled",
-  "num_queries": 62249,
+  "num_queries": 1000,
   "corpus_size": 62249,
   "metrics": {
     "BM25s_Lexical": {
-      "ndcg_cut_10": 0.8386557814477386,
-      "recall_10": 0.9163841989429549,
-      "recall_100": 0.9670195505148677,
-      "recall_1000": 0.9670195505148677
+      "ndcg_cut_10": 0.8433444228902606,
+      "recall_10": 0.929,
+      "recall_100": 0.975,
+      "recall_1000": 0.975
     },
     "ModernColBERT_Dense": {
-      "ndcg_cut_10": 0.7864623345329922,
-      "recall_10": 0.9058298125271089,
-      "recall_100": 0.9774936143552507,
-      "recall_1000": 0.9774936143552507
+      "ndcg_cut_10": 0.7376027072610384,
+      "recall_10": 0.89,
+      "recall_100": 0.978,
+      "recall_1000": 0.978
+    }
+  },
+  "latency": {
+    "BM25s_Lexical": {
+      "total_time_sec": 6.2613,
+      "mean_latency_ms": 6.261,
+      "throughput_qps": 159.71
+    },
+    "ModernColBERT_Dense": {
+      "total_time_sec": 4.561,
+      "mean_latency_ms": 4.561,
+      "throughput_qps": 219.25
     }
   }
 }

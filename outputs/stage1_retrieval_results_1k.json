@@ -16,5 +16,17 @@
       "recall_100": 1.0,
       "recall_1000": 1.0
     }
+  },
+  "latency": {
+    "BM25s_Lexical": {
+      "total_time_sec": 0.1575,
+      "mean_latency_ms": 0.158,
+      "throughput_qps": 6348.38
+    },
+    "ModernColBERT_Dense": {
+      "total_time_sec": 3.3225,
+      "mean_latency_ms": 3.322,
+      "throughput_qps": 300.98
+    }
   }
 }

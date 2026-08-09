@@ -42,7 +42,7 @@ class TestPhase4Implementation(unittest.TestCase):
         for qid in sample_qids:
             mock_seed_run[qid] = {doc_ids[i]: float(1.0 / (i + 1)) for i in range(5)}
 
-        expanded = run_gar_expansion(
+        res, latency = run_gar_expansion(
             seed_run=mock_seed_run,
             qrels=qrels,
             corpus_graph_matrix=corpus_graph,
@@ -51,6 +51,8 @@ class TestPhase4Implementation(unittest.TestCase):
             alpha=0.5,
             expanded_k=20
         )
+        expanded = res
+        self.assertIn("graph_expansion_mean_ms", latency)
 
         self.assertEqual(len(expanded), 3)
         for qid in sample_qids:
@@ -69,7 +71,7 @@ class TestPhase4Implementation(unittest.TestCase):
         for qid in sample_qids:
             mock_candidate_run[qid] = {passages[i]["doc_id"]: float(0.8 - i * 0.1) for i in range(5)}
 
-        reranked = run_cross_encoder_rerank(
+        reranked, latency = run_cross_encoder_rerank(
             passages=passages,
             qrels=qrels,
             candidate_run=mock_candidate_run,
@@ -77,6 +79,7 @@ class TestPhase4Implementation(unittest.TestCase):
             top_k=3,
             batch_size=4
         )
+        self.assertIn("mean_latency_ms", latency)
 
         self.assertEqual(len(reranked), 2)
         sample_qid = sample_qids[0]

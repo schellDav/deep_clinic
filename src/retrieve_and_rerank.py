@@ -123,9 +123,9 @@ def load_artifacts(data_dir: str = "data", cache_dir: str = "cache") -> Tuple[Li
     return passages, qrels, doc_ids, passage_embeddings, corpus_graph
 
 
-def run_bm25_retrieval(passages: List[Dict[str, Any]], qrels: Dict[str, Any], top_k: int = 100) -> Dict[str, Dict[str, float]]:
+def run_bm25_retrieval(passages: List[Dict[str, Any]], qrels: Dict[str, Any], top_k: int = 100) -> Tuple[Dict[str, Dict[str, float]], Dict[str, float]]:
     """
-    Execute Stage 1 BM25s sparse lexical retrieval for all queries.
+    Execute Stage 1 BM25s sparse lexical retrieval for all queries and track latency.
 
     Args:
         passages (List[Dict[str, Any]]): Passage corpus list.
@@ -133,9 +133,11 @@ def run_bm25_retrieval(passages: List[Dict[str, Any]], qrels: Dict[str, Any], to
         top_k (int): Number of top documents to retrieve per query.
 
     Returns:
-        Dict[str, Dict[str, float]]: Pytrec_eval formatted run dictionary {query_id: {doc_id: score}}.
+        Tuple containing run dictionary {query_id: {doc_id: score}} and latency metrics.
     """
+    import time
     print(f"[+] Running Stage 1 BM25s Lexical Retrieval (Top-{top_k})...")
+    t0 = time.perf_counter()
     
     passage_texts = [p["text"] for p in passages]
     corpus_tokens = bm25s.tokenize(passage_texts, stopwords="en")
@@ -158,8 +160,19 @@ def run_bm25_retrieval(passages: List[Dict[str, Any]], qrels: Dict[str, Any], to
             query_run[target_doc_id] = float(score)
         run_dict[qid] = query_run
 
-    print(f"[+] BM25s Lexical Retrieval finished for {len(run_dict)} queries.")
-    return run_dict
+    total_time_sec = time.perf_counter() - t0
+    num_queries = max(len(run_dict), 1)
+    mean_latency_ms = (total_time_sec / num_queries) * 1000.0
+    qps = num_queries / max(total_time_sec, 1e-6)
+
+    latency_metrics = {
+        "total_time_sec": round(total_time_sec, 4),
+        "mean_latency_ms": round(mean_latency_ms, 3),
+        "throughput_qps": round(qps, 2)
+    }
+
+    print(f"[+] BM25s Lexical Retrieval finished for {num_queries} queries in {total_time_sec:.2f}s ({mean_latency_ms:.2f}ms/query, {qps:.1f} QPS).")
+    return run_dict, latency_metrics
 
 
 def run_dense_retrieval(
@@ -169,7 +182,7 @@ def run_dense_retrieval(
     model_name: str = "lightonai/Reason-ModernColBERT",
     top_k: int = 100,
     batch_size: int = 32
-) -> Dict[str, Dict[str, float]]:
+) -> Tuple[Dict[str, Dict[str, float]], Dict[str, float]]:
     """
     Execute Stage 1 Dense Retrieval using PyTorch CUDA query encoding and matrix dot-product similarity.
 
@@ -182,9 +195,11 @@ def run_dense_retrieval(
         batch_size (int): Mini-batch size for query encoding.
 
     Returns:
-        Dict[str, Dict[str, float]]: Pytrec_eval formatted run dictionary {query_id: {doc_id: score}}.
+        Tuple containing run dictionary {query_id: {doc_id: score}} and latency metrics.
     """
+    import time
     print(f"[+] Running Stage 1 Dense Embedding Retrieval using '{model_name}' (Top-{top_k})...")
+    t0 = time.perf_counter()
     device = "cuda" if torch.cuda.is_available() else "cpu"
     if device == "cuda":
         try:
@@ -249,8 +264,19 @@ def run_dense_retrieval(
             query_run[target_doc_id] = float(scores[target_idx])
         run_dict[qid] = query_run
 
-    print(f"[+] Dense Retrieval finished for {len(run_dict)} queries.")
-    return run_dict
+    total_time_sec = time.perf_counter() - t0
+    num_queries = max(len(run_dict), 1)
+    mean_latency_ms = (total_time_sec / num_queries) * 1000.0
+    qps = num_queries / max(total_time_sec, 1e-6)
+
+    latency_metrics = {
+        "total_time_sec": round(total_time_sec, 4),
+        "mean_latency_ms": round(mean_latency_ms, 3),
+        "throughput_qps": round(qps, 2)
+    }
+
+    print(f"[+] Dense Retrieval finished for {num_queries} queries in {total_time_sec:.2f}s ({mean_latency_ms:.2f}ms/query, {qps:.1f} QPS).")
+    return run_dict, latency_metrics
 
 
 def run_cross_encoder_rerank(
@@ -260,9 +286,9 @@ def run_cross_encoder_rerank(
     model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2",
     top_k: int = 10,
     batch_size: int = 16
-) -> Dict[str, Dict[str, float]]:
+) -> Tuple[Dict[str, Dict[str, float]], Dict[str, float]]:
     """
-    Execute Stage 2 Static Cross-Encoder Re-Ranking over candidate passage pools.
+    Execute Stage 2 Static Cross-Encoder Re-Ranking over candidate passage pools and track latency.
 
     Args:
         passages (List[Dict[str, Any]]): Passage corpus list.
@@ -273,9 +299,11 @@ def run_cross_encoder_rerank(
         batch_size (int): Mini-batch size for transformer cross-attention scoring.
 
     Returns:
-        Dict[str, Dict[str, float]]: Re-ranked run dictionary {query_id: {doc_id: cross_encoder_score}}.
+        Tuple containing re-ranked run dictionary {query_id: {doc_id: score}} and latency metrics.
     """
+    import time
     print(f"[+] Executing Cross-Encoder Re-Ranking with model '{model_name}'...")
+    t0 = time.perf_counter()
     from sentence_transformers import CrossEncoder
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -310,8 +338,19 @@ def run_cross_encoder_rerank(
         query_rerank = {doc_id: float(score) for doc_id, score in sorted_pairs}
         reranked_run[qid] = query_rerank
 
-    print(f"[+] Cross-Encoder Re-Ranking finished for {len(reranked_run)} queries.")
-    return reranked_run
+    total_time_sec = time.perf_counter() - t0
+    num_queries = max(len(reranked_run), 1)
+    mean_latency_ms = (total_time_sec / num_queries) * 1000.0
+    qps = num_queries / max(total_time_sec, 1e-6)
+
+    latency_metrics = {
+        "total_time_sec": round(total_time_sec, 4),
+        "mean_latency_ms": round(mean_latency_ms, 3),
+        "throughput_qps": round(qps, 2)
+    }
+
+    print(f"[+] Cross-Encoder Re-Ranking finished for {num_queries} queries in {total_time_sec:.2f}s ({mean_latency_ms:.2f}ms/query, {qps:.1f} QPS).")
+    return reranked_run, latency_metrics
 
 
 def run_gar_expansion(
@@ -322,9 +361,9 @@ def run_gar_expansion(
     depth: int = 2,
     alpha: float = 0.5,
     expanded_k: int = 100
-) -> Dict[str, List[str]]:
+) -> Tuple[Dict[str, List[str]], Dict[str, float]]:
     """
-    Execute Stage 3 Graph-Adaptive Re-Ranking (GAR) multi-hop candidate pool expansion.
+    Execute Stage 3 Graph-Adaptive Re-Ranking (GAR) multi-hop candidate pool expansion and track traversal latency.
 
     Args:
         seed_run (Dict[str, Dict[str, float]]): Top N=20 seed candidates from Stage 1.
@@ -336,9 +375,11 @@ def run_gar_expansion(
         expanded_k (int): Target expanded candidate pool size per query.
 
     Returns:
-        Dict[str, List[str]]: Expanded candidate document ID lists {query_id: [doc_id_1, doc_id_2, ...]}.
+        Tuple containing expanded candidate document ID lists and graph expansion latency metrics.
     """
+    import time
     print(f"[+] Executing GAR Candidate Expansion (depth={depth}, alpha={alpha}, target_k={expanded_k})...")
+    t0 = time.perf_counter()
     doc_id_to_idx = {str(did): idx for idx, did in enumerate(doc_ids_list)}
     idx_to_doc_id = {idx: str(did) for idx, did in enumerate(doc_ids_list)}
 
@@ -377,8 +418,19 @@ def run_gar_expansion(
 
         expanded_candidates[qid] = expanded_doc_ids
 
-    print(f"[+] GAR Expansion finished for {len(expanded_candidates)} queries.")
-    return expanded_candidates
+    total_time_sec = time.perf_counter() - t0
+    num_queries = max(len(expanded_candidates), 1)
+    mean_latency_ms = (total_time_sec / num_queries) * 1000.0
+    qps = num_queries / max(total_time_sec, 1e-6)
+
+    latency_metrics = {
+        "graph_expansion_time_sec": round(total_time_sec, 4),
+        "graph_expansion_mean_ms": round(mean_latency_ms, 3),
+        "graph_expansion_qps": round(qps, 2)
+    }
+
+    print(f"[+] GAR Expansion finished for {num_queries} queries in {total_time_sec:.4f}s ({mean_latency_ms:.3f}ms/query, {qps:.1f} QPS).")
+    return expanded_candidates, latency_metrics
 
 
 def evaluate_with_pytrec(
@@ -484,13 +536,13 @@ def main() -> None:
 
     # 2. Run Stage 1 Lexical Retrieval (BM25s)
     bm25_top_k = config["retrieval"]["lexical"]["top_k"]
-    bm25_run = run_bm25_retrieval(passages, qrels, top_k=bm25_top_k)
+    bm25_run, bm25_latency = run_bm25_retrieval(passages, qrels, top_k=bm25_top_k)
 
     # 3. Run Stage 1 Dense Retrieval (Reason-ModernColBERT)
     dense_model = config["retrieval"]["dense"]["model_name"]
     dense_top_k = config["retrieval"]["dense"]["top_k"]
     dense_batch_size = config["retrieval"]["dense"]["batch_size"]
-    dense_run = run_dense_retrieval(
+    dense_run, dense_latency = run_dense_retrieval(
         passages,
         qrels,
         passage_embeddings,
@@ -504,7 +556,7 @@ def main() -> None:
     ce_batch_size = config["cross_encoder_reranking"]["batch_size"]
     ce_final_top_k = config["cross_encoder_reranking"]["final_top_k"]
 
-    stage2_rerank_run = run_cross_encoder_rerank(
+    stage2_rerank_run, stage2_latency = run_cross_encoder_rerank(
         passages=passages,
         qrels=qrels,
         candidate_run=dense_run,
@@ -521,7 +573,7 @@ def main() -> None:
 
     # Extract seed runs (Top-N=20 candidates from Stage 1)
     seed_run = {qid: dict(list(scores.items())[:gar_seed_k]) for qid, scores in dense_run.items()}
-    gar_expanded_pools = run_gar_expansion(
+    gar_expanded_pools, gar_expansion_latency = run_gar_expansion(
         seed_run=seed_run,
         qrels=qrels,
         corpus_graph_matrix=corpus_graph,
@@ -531,12 +583,12 @@ def main() -> None:
         expanded_k=gar_pool_k
     )
 
-    # Convert expanded pools to mock candidate runs for Cross-Encoder re-scoring
+    # Convert expanded pools to candidate runs for Cross-Encoder re-scoring
     gar_candidate_run = {}
     for qid, cand_list in gar_expanded_pools.items():
         gar_candidate_run[qid] = {did: float(1.0 / (idx + 1)) for idx, did in enumerate(cand_list)}
 
-    stage3_gar_run = run_cross_encoder_rerank(
+    stage3_gar_run, stage3_ce_latency = run_cross_encoder_rerank(
         passages=passages,
         qrels=qrels,
         candidate_run=gar_candidate_run,
@@ -544,6 +596,20 @@ def main() -> None:
         top_k=ce_final_top_k,
         batch_size=ce_batch_size
     )
+
+    # Combine GAR total latency (graph expansion + cross-encoder re-ranking)
+    num_queries = max(len(stage3_gar_run), 1)
+    gar_total_sec = gar_expansion_latency["graph_expansion_time_sec"] + stage3_ce_latency["total_time_sec"]
+    gar_mean_ms = (gar_total_sec / num_queries) * 1000.0
+    gar_qps = num_queries / max(gar_total_sec, 1e-6)
+
+    stage3_latency = {
+        "graph_expansion_time_sec": gar_expansion_latency["graph_expansion_time_sec"],
+        "cross_encoder_time_sec": stage3_ce_latency["total_time_sec"],
+        "total_time_sec": round(gar_total_sec, 4),
+        "mean_latency_ms": round(gar_mean_ms, 3),
+        "throughput_qps": round(gar_qps, 2)
+    }
 
     # 6. Evaluate all 3 stages using TREC evaluator
     metrics_to_eval = config["evaluation"]["metrics"]
@@ -553,44 +619,64 @@ def main() -> None:
     stage3_eval = evaluate_with_pytrec(qrels, stage3_gar_run, metric_names=metrics_to_eval)
 
     # 7. Output benchmark results summary table comparing Stage 1 vs Stage 2 vs Stage 3 GAR
-    print("\n================================================================================")
-    print("COMPARATIVE RAG vs CROSS-ENCODER & GAR BENCHMARK RESULTS")
-    print("================================================================================")
-    print(f"{'Pipeline Stage':<35} | {'nDCG@10':<10} | {'Recall@10':<10} | {'Recall@100':<10}")
-    print("-" * 80)
-    print(f"{'Stage 1: BM25s Lexical':<35} | {bm25_eval.get('ndcg_cut_10', 0):<10.4f} | {bm25_eval.get('recall_10', 0):<10.4f} | {bm25_eval.get('recall_100', 0):<10.4f}")
-    print(f"{'Stage 1: ModernColBERT Dense':<35} | {dense_eval.get('ndcg_cut_10', 0):<10.4f} | {dense_eval.get('recall_10', 0):<10.4f} | {dense_eval.get('recall_100', 0):<10.4f}")
-    print(f"{'Stage 2: Static Cross-Encoder':<35} | {stage2_eval.get('ndcg_cut_10', 0):<10.4f} | {stage2_eval.get('recall_10', 0):<10.4f} | {stage2_eval.get('recall_100', 0):<10.4f}")
-    print(f"{'Stage 3: Graph-Adaptive (GAR)':<35} | {stage3_eval.get('ndcg_cut_10', 0):<10.4f} | {stage3_eval.get('recall_10', 0):<10.4f} | {stage3_eval.get('recall_100', 0):<10.4f}")
-    print("================================================================================")
+    print("\n====================================================================================================")
+    print("COMPARATIVE RAG vs CROSS-ENCODER & GAR BENCHMARK RESULTS (PRECISION & LATENCY)")
+    print("====================================================================================================")
+    print(f"{'Pipeline Stage':<35} | {'nDCG@10':<10} | {'Recall@100':<10} | {'Latency (ms/query)':<20} | {'QPS':<10}")
+    print("-" * 100)
+    print(f"{'Stage 1: BM25s Lexical':<35} | {bm25_eval.get('ndcg_cut_10', 0):<10.4f} | {bm25_eval.get('recall_100', 0):<10.4f} | {bm25_latency['mean_latency_ms']:<20.2f} | {bm25_latency['throughput_qps']:<10.1f}")
+    print(f"{'Stage 1: ModernColBERT Dense':<35} | {dense_eval.get('ndcg_cut_10', 0):<10.4f} | {dense_eval.get('recall_100', 0):<10.4f} | {dense_latency['mean_latency_ms']:<20.2f} | {dense_latency['throughput_qps']:<10.1f}")
+    print(f"{'Stage 2: Static Cross-Encoder':<35} | {stage2_eval.get('ndcg_cut_10', 0):<10.4f} | {stage2_eval.get('recall_100', 0):<10.4f} | {stage2_latency['mean_latency_ms']:<20.2f} | {stage2_latency['throughput_qps']:<10.1f}")
+    print(f"{'Stage 3: Graph-Adaptive (GAR)':<35} | {stage3_eval.get('ndcg_cut_10', 0):<10.4f} | {stage3_eval.get('recall_100', 0):<10.4f} | {stage3_latency['mean_latency_ms']:<20.2f} | {stage3_latency['throughput_qps']:<10.1f}")
+    print("====================================================================================================")
 
     # 8. Save JSON results files
     corpus_size = len(passages)
     suffix = "62k" if corpus_size > 1000 else "1k"
     
+    specific_stage1_file = os.path.join(output_dir, f"stage1_retrieval_results_{suffix}.json")
     stage2_file = os.path.join(output_dir, f"stage2_rerank_results_{suffix}.json")
     stage3_file = os.path.join(output_dir, f"stage3_gar_results_{suffix}.json")
     master_output_path = os.path.join(output_dir, "stage1_retrieval_results.json")
 
+    stage1_data = {
+        "stage": "Stage 1 - Initial Retrieval Baselines",
+        "dataset": config["dataset"]["subset"],
+        "num_queries": len(qrels),
+        "corpus_size": corpus_size,
+        "metrics": {
+            "BM25s_Lexical": bm25_eval,
+            "ModernColBERT_Dense": dense_eval
+        },
+        "latency": {
+            "BM25s_Lexical": bm25_latency,
+            "ModernColBERT_Dense": dense_latency
+        }
+    }
     stage2_data = {
         "stage": "Stage 2 - Static Cross-Encoder Re-Ranking",
         "model": ce_model_name,
         "corpus_size": corpus_size,
-        "metrics": stage2_eval
+        "metrics": stage2_eval,
+        "latency": stage2_latency
     }
     stage3_data = {
         "stage": "Stage 3 - Graph-Adaptive Re-Ranking (GAR)",
         "model": ce_model_name,
         "corpus_size": corpus_size,
-        "metrics": stage3_eval
+        "metrics": stage3_eval,
+        "latency": stage3_latency
     }
 
+    with open(specific_stage1_file, "w", encoding="utf-8") as f:
+        json.dump(stage1_data, f, indent=2)
     with open(stage2_file, "w", encoding="utf-8") as f:
         json.dump(stage2_data, f, indent=2)
     with open(stage3_file, "w", encoding="utf-8") as f:
         json.dump(stage3_data, f, indent=2)
 
-    print(f"\n[+] Stage 2 results saved to '{stage2_file}'")
+    print(f"\n[+] Stage 1 results updated at '{specific_stage1_file}'")
+    print(f"[+] Stage 2 results saved to '{stage2_file}'")
     print(f"[+] Stage 3 GAR results saved to '{stage3_file}'")
 
 

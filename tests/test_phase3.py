@@ -55,7 +55,8 @@ class TestPhase3Implementation(unittest.TestCase):
         
         # Test on a small subset of 10 queries for fast verification
         query_subset = dict(list(qrels.items())[:10])
-        bm25_run = run_bm25_retrieval(passages, query_subset, top_k=20)
+        bm25_run, bm25_latency = run_bm25_retrieval(passages, query_subset, top_k=20)
+        self.assertIn("mean_latency_ms", bm25_latency)
 
         self.assertEqual(len(bm25_run), 10)
         sample_qid = list(bm25_run.keys())[0]
@@ -71,7 +72,7 @@ class TestPhase3Implementation(unittest.TestCase):
         """Test pytrec_eval metric evaluation and native Python fallback calculation."""
         passages, qrels, _, _, _ = load_artifacts(self.data_dir, self.cache_dir)
         query_subset = dict(list(qrels.items())[:10])
-        bm25_run = run_bm25_retrieval(passages, query_subset, top_k=20)
+        bm25_run, _ = run_bm25_retrieval(passages, query_subset, top_k=20)
 
         metrics = ["ndcg_cut_10", "recall_10", "recall_100", "recall_1000"]
         eval_results = evaluate_with_pytrec(query_subset, bm25_run, metric_names=metrics)
