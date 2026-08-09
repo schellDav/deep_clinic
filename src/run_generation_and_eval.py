@@ -204,8 +204,11 @@ def main() -> None:
         }
         s3_ragas_scores = evaluate_ragas_metrics(s3_ragas_dataset, judge_model_name=config["evaluation"]["ragas"]["judge_model_name"])
 
-        # 8. Construct Stage 4 Output Matrix
-        stage4_output_file = os.path.join(output_dir, f"stage4_ragas_results_{suffix}.json")
+        # 8. Construct Stage 4 Output Matrix with model-specific filename preservation
+        model_tag = gen_model_name.split("/")[-1].lower().replace("_", "-")
+        specific_model_file = os.path.join(output_dir, f"stage4_ragas_results_{model_tag}_{suffix}.json")
+        default_stage4_file = os.path.join(output_dir, f"stage4_ragas_results_{suffix}.json")
+
         stage4_data = {
             "stage": "Stage 4 - End-to-End LLM Generation & RAGAS Analysis",
             "generator_model": gen_model_name,
@@ -226,7 +229,10 @@ def main() -> None:
             }
         }
 
-        with open(stage4_output_file, "w", encoding="utf-8") as f:
+        # Save both model-specific file and default stage4 file
+        with open(specific_model_file, "w", encoding="utf-8") as f:
+            json.dump(stage4_data, f, indent=2)
+        with open(default_stage4_file, "w", encoding="utf-8") as f:
             json.dump(stage4_data, f, indent=2)
 
         print("\n====================================================================================================")
@@ -237,8 +243,8 @@ def main() -> None:
         print(f"{'Stage 1 Baseline Context':<35} | {s1_ragas_scores.get('faithfulness', 0):<15.4f} | {s1_ragas_scores.get('answer_relevance', 0):<20.4f} | {s1_gen_latency['mean_latency_ms']:<15.2f}")
         print(f"{'Stage 2 Cross-Encoder Context':<35} | {s2_ragas_scores.get('faithfulness', 0):<15.4f} | {s2_ragas_scores.get('answer_relevance', 0):<20.4f} | {s2_gen_latency['mean_latency_ms']:<15.2f}")
         print(f"{'Stage 3 GAR Context':<35} | {s3_ragas_scores.get('faithfulness', 0):<15.4f} | {s3_ragas_scores.get('answer_relevance', 0):<20.4f} | {s3_gen_latency['mean_latency_ms']:<15.2f}")
-        print("====================================================================================================")
-        print(f"[+] Stage 4 results saved to '{stage4_output_file}'")
+        print(f"[+] Stage 4 model-specific results saved to '{specific_model_file}'")
+        print(f"[+] Stage 4 results saved to '{default_stage4_file}'")
 
     except Exception as err:
         dump_error_log(err, log_dir=log_dir, output_dir=output_dir)
