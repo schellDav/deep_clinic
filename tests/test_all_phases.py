@@ -17,6 +17,7 @@ import unittest
 from tests.test_phase2 import TestPhase2Implementation
 from tests.test_phase3 import TestPhase3Implementation
 from tests.test_phase4 import TestPhase4Implementation
+from tests.test_phase5 import TestPhase5Implementation
 
 
 def suite():
@@ -26,6 +27,7 @@ def suite():
     test_suite.addTests(loader.loadTestsFromTestCase(TestPhase2Implementation))
     test_suite.addTests(loader.loadTestsFromTestCase(TestPhase3Implementation))
     test_suite.addTests(loader.loadTestsFromTestCase(TestPhase4Implementation))
+    test_suite.addTests(loader.loadTestsFromTestCase(TestPhase5Implementation))
     return test_suite
 
 
