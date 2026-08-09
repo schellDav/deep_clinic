@@ -25,16 +25,21 @@ echo "CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES:-none}"
 # module load cuda/12.1
 # module load python/3.10
 
-# Load KISSKI Environment Modules & Activate Python Virtual Environment
-module load gcc/13.2.0 python/3.11.9 2>/dev/null || true
-
-if [ -f ".venv/bin/activate" ]; then
-    source .venv/bin/activate
+# Load Conda or Virtual Environment Python Interpreter
+if [ -x "$HOME/miniconda3/envs/deep_clinic_rag/bin/python" ]; then
+    PYTHON_EXEC="$HOME/miniconda3/envs/deep_clinic_rag/bin/python"
+elif [ -x "./.venv/bin/python" ]; then
+    PYTHON_EXEC="./.venv/bin/python"
+elif [ -f ".venv/bin/activate" ]; then
+    source .venv/bin/activate 2>/dev/null || true
+    PYTHON_EXEC=$(which python)
+else
+    PYTHON_EXEC="python3"
 fi
 
 mkdir -p logs data outputs cache
 
 echo "[+] Executing corpus graph building script..."
-python -m src.build_graph --config config/default_config.yaml
+$PYTHON_EXEC -m src.build_graph --config config/default_config.yaml
 
 echo "=== Completed Job: Corpus Graph Construction ==="

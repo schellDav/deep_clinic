@@ -27,13 +27,24 @@ echo "CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES:-none}"
 # Load KISSKI Environment Modules & Activate Python Virtual Environment
 module load gcc/13.2.0 python/3.11.9 2>/dev/null || true
 
-if [ -f ".venv/bin/activate" ]; then
-    source .venv/bin/activate
+# Load Conda or Virtual Environment Python Interpreter
+if [ -x "$HOME/miniconda3/envs/deep_clinic_rag/bin/python" ]; then
+    PYTHON_EXEC="$HOME/miniconda3/envs/deep_clinic_rag/bin/python"
+elif [ -x "./.venv/bin/python" ]; then
+    PYTHON_EXEC="./.venv/bin/python"
+elif [ -f ".venv/bin/activate" ]; then
+    source .venv/bin/activate 2>/dev/null || true
+    PYTHON_EXEC=$(which python)
+else
+    PYTHON_EXEC="python3"
 fi
+
+echo "[+] Using Python Interpreter: $PYTHON_EXEC"
+$PYTHON_EXEC -c "import sys, numpy; print('[+] Environment Verified:', sys.version, '| NumPy:', numpy.__version__)"
 
 mkdir -p logs outputs
 
 echo "[+] Executing Stage 4 LLM Generation & RAGAS Analysis..."
-python -m src.run_generation_and_eval --config config/default_config.yaml
+$PYTHON_EXEC -m src.run_generation_and_eval --config config/default_config.yaml
 
 echo "=== Completed Job: LLM Generation & RAGAS Evaluation ==="
