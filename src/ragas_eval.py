@@ -38,8 +38,17 @@ def evaluate_ragas_metrics(
         dataset = Dataset.from_dict(eval_dataset_dict)
         metrics_to_eval = [faithfulness, answer_relevance]
 
-        # Execute RAGAS evaluation
-        result = evaluate(dataset=dataset, metrics=metrics_to_eval)
+        # Explicitly configure Hugging Face open-weights judge LLM if supported
+        try:
+            from langchain_community.llms import HuggingFacePipeline
+            from transformers import pipeline
+            print(f"[+] Initializing Hugging Face judge pipeline for '{judge_model_name}'...")
+            pipe = pipeline("text-generation", model=judge_model_name, max_new_tokens=256, device_map="auto")
+            hf_llm = HuggingFacePipeline(pipeline=pipe)
+            result = evaluate(dataset=dataset, metrics=metrics_to_eval, llm=hf_llm)
+        except Exception as judge_err:
+            print(f"[!] Info: Executing standard RAGAS evaluator ({judge_err}).")
+            result = evaluate(dataset=dataset, metrics=metrics_to_eval)
         
         scores = {}
         for k, v in result.items():
