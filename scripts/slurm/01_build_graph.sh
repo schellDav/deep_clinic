@@ -25,22 +25,36 @@ echo "CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES:-none}"
 # module load cuda/12.1
 # module load python/3.10
 
-# Source Conda Environment
+# Source User Profile & Conda Environment
+if [ -f "$HOME/.bashrc" ]; then
+    source "$HOME/.bashrc" 2>/dev/null || true
+fi
+
 for conda_path in "$HOME/miniconda3" "$HOME/anaconda3" "$HOME/conda" "/opt/conda" "$HOME/mambaforge"; do
     if [ -f "$conda_path/etc/profile.d/conda.sh" ]; then
-        source "$conda_path/etc/profile.d/conda.sh"
+        source "$conda_path/etc/profile.d/conda.sh" 2>/dev/null || true
         break
     fi
 done
 
-if command -v conda &> /dev/null; then
+PYTHON_BIN=""
+for candidate in \
+    "$HOME/.conda/envs/deep_clinic_rag/bin/python" \
+    "$HOME/miniconda3/envs/deep_clinic_rag/bin/python" \
+    "$HOME/anaconda3/envs/deep_clinic_rag/bin/python" \
+    "$CONDA_PREFIX/bin/python"; do
+    if [ -x "$candidate" ]; then
+        PYTHON_BIN="$candidate"
+        break
+    fi
+done
+
+if [ -z "$PYTHON_BIN" ]; then
     conda activate deep_clinic_rag 2>/dev/null || source activate deep_clinic_rag 2>/dev/null || true
-elif [ -f ".venv/bin/activate" ]; then
-    source .venv/bin/activate
+    PYTHON_BIN=$(which python 2>/dev/null || which python3)
 fi
 
-PYTHON_BIN=$(which python 2>/dev/null || which python3 2>/dev/null)
-echo "[+] Using Python interpreter: $PYTHON_BIN"
+echo "[+] Active Python Interpreter: $PYTHON_BIN"
 
 mkdir -p logs data outputs cache
 
