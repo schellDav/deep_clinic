@@ -12,7 +12,7 @@ This repository evaluates biomedical Retrieval-Augmented Generation (RAG) across
 1. **Initial Retrieval (Stage 1):** Sparse Lexical (`BM25s`) & Dense Embedding (`Reason-ModernColBERT` / `qwen3-embed-0.6b`).
 2. **Static Re-Ranking (Stage 2):** HuggingFace Cross-Encoder / `monoT5-base`.
 3. **Graph-Adaptive Re-Ranking (GAR - Stage 3):** Dynamic candidate pool expansion using multi-hop graph traversal on a pre-computed passage similarity corpus graph (`networkx` & `scipy`).
-4. **End-to-End LLM & RAGAS Analysis:** Final response generation using `Llama-3B-Instruct` evaluated via `RAGAS` (Faithfulness & Answer Relevance).
+4. **End-to-End LLM & RAGAS Analysis:** Final response generation using `Qwen/Qwen3-30B-A3B-Instruct-2507` (or `Qwen2.5-3B-Instruct`) evaluated via `RAGAS` (Faithfulness & Answer Relevance).
 
 ---
 
@@ -50,11 +50,15 @@ Project/
 ├── src/                        # Core Python source package
 │   ├── __init__.py
 │   ├── build_graph.py          # Corpus ingestion, embedding & graph builder
-│   └── retrieve_and_rerank.py  # Stage 1 retrieval baselines & TREC evaluation
+│   ├── evaluator.py            # TREC metric evaluation functions (pytrec_eval)
+│   ├── rerankers.py            # Stage 2 Cross-Encoder & Stage 3 GAR re-ranking
+│   ├── retrievers.py           # Stage 1 BM25s lexical & ModernColBERT dense search
+│   └── retrieve_and_rerank.py  # Master pipeline execution CLI entrypoint
 ├── tests/                      # Automated test suite
 │   ├── test_all_phases.py      # Master test runner
 │   ├── test_phase2.py          # Phase 2 graph construction unit tests
-│   └── test_phase3.py          # Phase 3 retrieval baseline unit tests
+│   ├── test_phase3.py          # Phase 3 retrieval baseline unit tests
+│   └── test_phase4.py          # Phase 4 Cross-Encoder & GAR unit tests
 ├── environment.yml             # Conda environment definition
 ├── PROGRESS.md                 # Minimal functional progress tracker log
 ├── PROJECT_PLAN.md             # Detailed project specification & execution plan
@@ -75,12 +79,12 @@ chmod +x scripts/setup_env.sh
 
 ---
 
-## 4. Running the Benchmark on Slurm
+## 4. Slurm Cluster Execution (KISSKI Platform)
 
-To submit individual pipeline stages:
+Submit individual pipeline stages via Slurm:
 
 ```bash
-# Stage 1: Build Corpus Graph
+# Stage 1: Build Corpus Graph & Embeddings
 sbatch scripts/slurm/01_build_graph.sh
 
 # Stage 2: Retrieval & GAR Re-Ranking
@@ -129,12 +133,21 @@ python -m src.build_graph --config config/default_config.yaml --max_passages 622
 sbatch scripts/slurm/01_build_graph.sh
 ```
 
-### Step 3: Execute Retrieval, GAR Expansion & Evaluation
+### Step 3: Execute Retrieval, GAR Expansion & Re-Ranking
+Run retrieval baselines (BM25s & Reason-ModernColBERT), Static Cross-Encoder re-ranking, and Graph-Adaptive Re-Ranking (GAR):
 ```bash
-# Run retrieval & GAR candidate expansion:
-sbatch scripts/slurm/02_retrieve_gar.sh
+# Run locally over 1k Labeled Corpus:
+python -m src.retrieve_and_rerank --config config/default_config.yaml --max_passages 1000
 
-# Run end-to-end LLM generation & RAGAS evaluation:
-sbatch scripts/slurm/03_eval_ragas.sh
+# Run locally over 62k Full Expanded Corpus:
+python -m src.retrieve_and_rerank --config config/default_config.yaml
+
+# Or on Slurm Cluster (KISSKI):
+sbatch scripts/slurm/02_retrieve_gar.sh
 ```
 
+### Step 4: Run End-to-End LLM Generation & RAGAS Evaluation
+```bash
+# Run end-to-end LLM generation & RAGAS evaluation on Slurm:
+sbatch scripts/slurm/03_eval_ragas.sh
+```

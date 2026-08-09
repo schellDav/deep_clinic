@@ -24,7 +24,7 @@
    - **Corpus Graph Construction:** Pre-computed similarity edges between passages using `BM25s` k-NN and dense embeddings (`Reason-ModernColBERT`, `qwen3-embed-0.6b`).
    - **GAR Candidate Pool Expansion:** Multi-hop graph traversal to dynamically retrieve relevant context neighbors.
 4. **End-to-End LLM Generator (Executed Last):**
-   - **Generative Model:** Small LLM (e.g. `Llama-3B-Instruct` or `Qwen2.5-3B-Instruct`).
+   - **Generative Model:** `Qwen/Qwen3-30B-A3B-Instruct-2507` (or `Qwen2.5-3B-Instruct`).
 
 ### C. Evaluation Framework & Metrics
 1. **Retrieval Benchmark (Primary Target):**
