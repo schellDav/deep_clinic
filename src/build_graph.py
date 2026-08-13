@@ -226,9 +226,14 @@ def compute_dense_embeddings(passages: List[Dict[str, Any]], model_name: str = "
         print(f"[+] Optimized CPU execution: PyTorch num_threads set to {num_threads}, batch_size={batch_size}")
     print(f"[+] Computing on device: {device.upper()}")
 
-    # Load model and tokenizer directly from Hugging Face Hub (strict loading)
-    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-    model = AutoModel.from_pretrained(model_name, trust_remote_code=True).to(device)
+    # Load model and tokenizer directly from Hugging Face Hub (with offline fallback)
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+        model = AutoModel.from_pretrained(model_name, trust_remote_code=True).to(device)
+    except Exception as err:
+        print(f"[!] Info: Network request failed ({err}). Loading embedding model with local_files_only=True...")
+        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True, local_files_only=True)
+        model = AutoModel.from_pretrained(model_name, trust_remote_code=True, local_files_only=True).to(device)
 
     model.eval()
     texts = [p["text"] for p in passages]

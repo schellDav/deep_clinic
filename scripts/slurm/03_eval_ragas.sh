@@ -19,28 +19,9 @@
 
 set -e
 
-echo "=== Starting Slurm Job: LLM Generation & RAGAS Evaluation ==="
-echo "Node: $(hostname)"
-#!/usr/bin/env bash
-#SBATCH --job-name=rag_03_eval_ragas
-#SBATCH --output=logs/%x_%j.out
-#SBATCH --error=logs/%x_%j.err
-#SBATCH --account=kisski-arbscg
-#SBATCH --partition=kisski
-#SBATCH --gpus=A100:1
-#SBATCH --constraint=80gb_vram
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=64G
-#SBATCH --time=06:00:00
-
-# ==============================================================================
-# Step 3: End-to-End LLM Response Generation & RAGAS Evaluation
-# Generates medical QA answers for Stage 1, Stage 2 (Cross-Encoder), and Stage 3 (GAR)
-# contexts, and evaluates Faithfulness & Answer Relevance via RAGAS.
-# Output saved to outputs/stage4_ragas_results_1k.json & outputs/stage4_ragas_results_62k.json.
-# ==============================================================================
-
-set -e
+# Enable HuggingFace offline mode for compute nodes without internet access
+export TRANSFORMERS_OFFLINE=1
+export HF_HUB_OFFLINE=1
 
 echo "=== Starting Slurm Job: LLM Generation & RAGAS Evaluation ==="
 echo "Node: $(hostname)"

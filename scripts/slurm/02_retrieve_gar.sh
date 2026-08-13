@@ -17,6 +17,10 @@
 
 set -e
 
+# Enable HuggingFace offline mode for compute nodes without internet access
+export TRANSFORMERS_OFFLINE=1
+export HF_HUB_OFFLINE=1
+
 echo "=== Starting Slurm Job: Retrieval, GAR & Re-Ranking ==="
 echo "Node: $(hostname)"
 echo "Date: $(date)"

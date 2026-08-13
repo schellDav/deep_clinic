@@ -44,24 +44,40 @@ class MedicalQAGenerator:
             return
 
         try:
-            self.tokenizer = AutoTokenizer.from_pretrained(
-                self.model_name,
-                trust_remote_code=True,
-                padding_side="left"
-            )
-            if self.tokenizer.pad_token is None:
-                self.tokenizer.pad_token = self.tokenizer.eos_token
-
             dtype = torch.bfloat16 if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else (
                 torch.float16 if torch.cuda.is_available() else torch.float32
             )
 
-            self.model = AutoModelForCausalLM.from_pretrained(
-                self.model_name,
-                trust_remote_code=True,
-                torch_dtype=dtype,
-                device_map="auto" if self.device == "cuda" else None
-            )
+            try:
+                self.tokenizer = AutoTokenizer.from_pretrained(
+                    self.model_name,
+                    trust_remote_code=True,
+                    padding_side="left"
+                )
+                self.model = AutoModelForCausalLM.from_pretrained(
+                    self.model_name,
+                    trust_remote_code=True,
+                    torch_dtype=dtype,
+                    device_map="auto" if self.device == "cuda" else None
+                )
+            except Exception as net_err:
+                print(f"[!] Info: Network request failed ({net_err}). Loading Generator model with local_files_only=True...")
+                self.tokenizer = AutoTokenizer.from_pretrained(
+                    self.model_name,
+                    trust_remote_code=True,
+                    padding_side="left",
+                    local_files_only=True
+                )
+                self.model = AutoModelForCausalLM.from_pretrained(
+                    self.model_name,
+                    trust_remote_code=True,
+                    torch_dtype=dtype,
+                    device_map="auto" if self.device == "cuda" else None,
+                    local_files_only=True
+                )
+
+            if self.tokenizer.pad_token is None:
+                self.tokenizer.pad_token = self.tokenizer.eos_token
             if self.device != "cuda":
                 self.model = self.model.to("cpu")
 

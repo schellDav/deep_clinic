@@ -16,6 +16,10 @@
 
 set -e
 
+# Enable HuggingFace offline mode for compute nodes without internet access
+export TRANSFORMERS_OFFLINE=1
+export HF_HUB_OFFLINE=1
+
 echo "=== Starting Background Job: 62k Full Corpus Ablation ==="
 echo "Node: $(hostname)"
 echo "Date: $(date)"

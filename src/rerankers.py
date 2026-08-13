@@ -47,7 +47,11 @@ def run_cross_encoder_rerank(
             print("[!] CUDA sm_120 compatibility error detected. Falling back to CPU for Cross-Encoder...")
             device = "cpu"
 
-    model = CrossEncoder(model_name, device=device)
+    try:
+        model = CrossEncoder(model_name, device=device)
+    except Exception as err:
+        print(f"[!] Info: Network request failed ({err}). Loading Cross-Encoder with local_files_only=True...")
+        model = CrossEncoder(model_name, device=device, local_files_only=True)
 
     # Fast lookup map doc_id -> passage text
     doc_map = {str(p["doc_id"]): p["text"] for p in passages}

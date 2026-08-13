@@ -104,9 +104,14 @@ def run_dense_retrieval(
 
     print(f"[+] Encoding queries on device: {device.upper()}")
 
-    # Load model and tokenizer (strict loading)
-    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-    model = AutoModel.from_pretrained(model_name, trust_remote_code=True).to(device)
+    # Load model and tokenizer (with offline fallback if network is unreachable)
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+        model = AutoModel.from_pretrained(model_name, trust_remote_code=True).to(device)
+    except Exception as err:
+        print(f"[!] Info: Network request failed ({err}). Loading Dense Retriever model with local_files_only=True...")
+        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True, local_files_only=True)
+        model = AutoModel.from_pretrained(model_name, trust_remote_code=True, local_files_only=True).to(device)
     model.eval()
 
     query_ids = list(qrels.keys())
