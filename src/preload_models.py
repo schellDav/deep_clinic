@@ -8,6 +8,7 @@ Pre-downloads Cross-Encoder, Dense Retriever, and LLM Generator models on the lo
 import sys
 from sentence_transformers import CrossEncoder
 from transformers import AutoTokenizer, AutoModelForCausalLM
+from huggingface_hub import snapshot_download
 import yaml
 
 
