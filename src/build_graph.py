@@ -226,14 +226,21 @@ def compute_dense_embeddings(passages: List[Dict[str, Any]], model_name: str = "
         print(f"[+] Optimized CPU execution: PyTorch num_threads set to {num_threads}, batch_size={batch_size}")
     print(f"[+] Computing on device: {device.upper()}")
 
-    # Load model and tokenizer directly from Hugging Face Hub (with offline fallback)
+    # Load model and tokenizer directly from Hugging Face Hub (with offline & SentenceTransformer fallback)
     try:
-        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-        model = AutoModel.from_pretrained(model_name, trust_remote_code=True).to(device)
-    except Exception as err:
-        print(f"[!] Info: Network request failed ({err}). Loading embedding model with local_files_only=True...")
-        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True, local_files_only=True)
-        model = AutoModel.from_pretrained(model_name, trust_remote_code=True, local_files_only=True).to(device)
+        try:
+            tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+            model = AutoModel.from_pretrained(model_name, trust_remote_code=True).to(device)
+        except Exception as err:
+            print(f"[!] Info: Direct load notice ({err}). Loading with local_files_only=True...")
+            tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True, local_files_only=True)
+            model = AutoModel.from_pretrained(model_name, trust_remote_code=True, local_files_only=True).to(device)
+    except Exception as fallback_err:
+        from sentence_transformers import SentenceTransformer
+        print(f"[!] Info: Falling back to SentenceTransformer loader for '{model_name}' ({fallback_err})...")
+        st_model = SentenceTransformer(model_name, device=device)
+        tokenizer = st_model.tokenizer
+        model = st_model[0].auto_model
 
     model.eval()
     texts = [p["text"] for p in passages]
