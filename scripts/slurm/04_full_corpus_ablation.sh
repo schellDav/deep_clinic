@@ -8,7 +8,7 @@
 #SBATCH --constraint=80gb_vram
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
-#SBATCH --time=08:00:00
+#SBATCH --time=24:00:00
 
 # ==============================================================================
 # Step 4: Full 62k Corpus Benchmarking & Ablation Study
