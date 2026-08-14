@@ -9,10 +9,10 @@
     "recall_1000": 0.957
   },
   "latency": {
-    "graph_expansion_time_sec": 2.9346,
-    "cross_encoder_time_sec": 165.7704,
-    "total_time_sec": 168.705,
-    "mean_latency_ms": 168.705,
-    "throughput_qps": 5.93
+    "graph_expansion_time_sec": 11.9673,
+    "cross_encoder_time_sec": 158.8581,
+    "total_time_sec": 170.8254,
+    "mean_latency_ms": 170.825,
+    "throughput_qps": 5.85
   }
 }

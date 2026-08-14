@@ -19,14 +19,14 @@
   },
   "latency": {
     "BM25s_Lexical": {
-      "total_time_sec": 6.2613,
-      "mean_latency_ms": 6.261,
-      "throughput_qps": 159.71
+      "total_time_sec": 18.375,
+      "mean_latency_ms": 18.375,
+      "throughput_qps": 54.42
     },
     "ModernColBERT_Dense": {
-      "total_time_sec": 4.561,
-      "mean_latency_ms": 4.561,
-      "throughput_qps": 219.25
+      "total_time_sec": 15.8104,
+      "mean_latency_ms": 15.81,
+      "throughput_qps": 63.25
     }
   }
 }
