@@ -12,11 +12,41 @@ from huggingface_hub import snapshot_download
 import yaml
 
 
+import os
+import urllib.request
+import pandas as pd
+
 def main():
-    print("=== Deep Clinic HPC Model Pre-Caching Utility ===")
+    print("=== Deep Clinic HPC Model & Dataset Pre-Caching Utility ===")
+    os.makedirs("data", exist_ok=True)
+    os.makedirs("cache", exist_ok=True)
     
     with open("config/default_config.yaml", "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
+
+    # 1. Pre-cache Datasets
+    print("\n[+] Checking & Pre-caching PubMedQA datasets in './data'...")
+    local_json_path = os.path.join("data", "ori_pqal.json")
+    if not os.path.exists(local_json_path):
+        url = "https://raw.githubusercontent.com/pubmedqa/pubmedqa/master/data/ori_pqal.json"
+        print(f"[+] Downloading official PubMedQA labeled data from '{url}'...")
+        with urllib.request.urlopen(url) as response:
+            content = response.read().decode("utf-8")
+        with open(local_json_path, "w", encoding="utf-8") as f:
+            f.write(content)
+        print(f"[+] Successfully cached '{local_json_path}'.")
+    else:
+        print(f"[+] Found cached '{local_json_path}'.")
+
+    local_unlabeled_path = os.path.join("data", "pqa_unlabeled.parquet")
+    if not os.path.exists(local_unlabeled_path):
+        url_u = "https://huggingface.co/datasets/qiaojin/PubMedQA/resolve/main/pqa_unlabeled/train-00000-of-00001.parquet"
+        print(f"[+] Downloading official PubMedQA unlabeled distractor data (61k abstracts)...")
+        df_u = pd.read_parquet(url_u)
+        df_u.to_parquet(local_unlabeled_path)
+        print(f"[+] Successfully cached '{local_unlabeled_path}'.")
+    else:
+        print(f"[+] Found cached '{local_unlabeled_path}'.")
 
     dense_model_name = config["retrieval"]["dense"]["model_name"]
     cross_encoder_name = config["cross_encoder_reranking"]["model_name"]
