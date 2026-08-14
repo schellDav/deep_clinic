@@ -73,5 +73,36 @@
 2. Run `RAGAS` evaluation for Faithfulness and Answer Relevance.
 
 ### Phase 7: Synthesis, Visualization & Report Writing
-1. Generate comparative benchmark charts (nDCG@10 vs Recall@K).
-2. Finalize project presentation and final write-up.
+1. Generate comparative benchmark charts (nDCG@10 vs Recall@K, RAGAS radar, scaling ablation, Pareto frontier).
+2. Finalize project presentation and final write-up with publication-grade rigor.
+
+---
+
+## 5. Strategic Report & Presentation Blueprint (Evaluation Core Points)
+
+The final report (`FINAL_REPORT.md`) and slide deck (`PRESENTATION.md`) will center on these five core pillars:
+
+### 1. Clinical Motivation & Problem Statement
+* **The Clinical Bottleneck:** LLMs in medicine hallucinate when context is noisy or incomplete. Standard single-vector Dense Retrieval (e.g. ModernColBERT) performs well on small closed corpora (nDCG=0.968 on 1k) but degrades drastically when scaling to large, real-world collections with 61,000+ distractor abstracts (nDCG drops from 0.9685 down to 0.7376).
+* **The Graph Hypothesis:** Medical knowledge is naturally relational. By constructing a hybrid k-NN corpus graph over PubMed abstracts, Graph-Adaptive Re-Ranking (GAR) captures multi-hop contextual pathways that standard vector search misses.
+
+### 2. Mathematical Graph Formulation
+* **Corpus Graph:** Hybrid Sparse-Dense k-NN adjacency matrix $A \in \mathbb{R}^{N \times N}$ with $1,645,128$ edges, filtered by similarity threshold $\tau = 0.65$.
+* **Multi-Hop Dynamic Rescoring:**
+  $$S_{GAR}^{(h)} = S_{seed} + \sum_{k=1}^h \alpha^k A^k S_{seed}$$
+  where $\alpha = 0.5$ provides exponential multi-hop decay, expanding seed candidates into a rich, coherent context pool.
+
+### 3. Dual Evaluation Framework (IR + Generative)
+* **Information Retrieval (IR) Metrics:** Evaluated over 1,000 test queries via `pytrec_eval` (nDCG@10, Recall@10, Recall@100, QPS Throughput).
+* **Generative RAGAS Metrics:** Local LLM-as-a-Judge pipeline using `google/gemma-4-12B-it` generator and `Qwen/Qwen3-30B-A3B-Instruct-2507` judge on NVIDIA A100 GPUs (Faithfulness & Answer Relevance).
+
+### 4. Key Empirical Findings (1k vs. 62k Scaling Ablation)
+1. **Faithfulness Amplification:** GAR improves factual faithfulness over baseline by **+3.17%** on the 1k corpus (`0.6368` $\rightarrow$ `0.6685`) and **+4.14%** on the 62k corpus (`0.6577` $\rightarrow$ `0.6991`), showing a **+30.6% stronger advantage under real-world scaling**.
+2. **Distractor Recovery:** Re-ranking recovers nDCG@10 from `0.7376` (Dense on 62k) back up to `0.9167` (GAR) and `0.9227` (Cross-Encoder), regaining +18.5% precision.
+3. **Relevance Consistency:** Answer Relevance remains consistently high across all stages (~64% on 1k, ~69–70% on 62k), verifying that the factual faithfulness gain is achieved without losing query focus.
+4. **Computational Efficiency:** GAR on 62k achieves the fastest LLM generation time (1h 32m, 0.18 QPS) because graph-traversed contexts are concise, cohesive, and redundancy-free.
+
+### 5. Infrastructure & Reproducibility
+* High-Performance Cluster Orchestration on KISSKI (A100 80GB GPUs).
+* 100% offline cluster compatibility with automated pre-caching (`src/preload_models.py`).
+* Comprehensive test suite (`tests/test_all_phases.py` with 13 automated tests).
