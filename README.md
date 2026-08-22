@@ -77,7 +77,7 @@ This repository contains the complete implementation and empirical benchmarks fo
 | | | | | |
 | **62k Full** | ModernColBERT Dense Baseline | 0.6577 | **0.7012** | 1h 42m (6.12s/query) |
 | **62k Full** | Cross-Encoder Re-Ranking | 0.6716 (+1.39%) | 0.6881 | 2h 13m (8.03s/query) |
-| **62k Full** | **Graph-Adaptive Re-Ranking (GAR)** | **0.6991** (**+4.14%** 🚀) | 0.6937 | **1h 32m (5.57s/query)** |
+| **62k Full** | **Graph-Adaptive Re-Ranking (GAR)** | **0.6991** (**+4.14%**) | 0.6937 | **1h 32m (5.57s/query)** |
 
 ---
 
