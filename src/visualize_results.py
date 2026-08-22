@@ -101,7 +101,7 @@ def plot_fig1_retrieval_metrics():
     axes[0].set_xticks(x)
     axes[0].set_xticklabels(methods)
     axes[0].set_ylabel("Score (Mean over N=3 Runs)")
-    axes[0].set_ylim(0.65, 1.05)
+    axes[0].set_ylim(0.65, 1.06)
     axes[0].grid(axis="y", linestyle="--", alpha=0.4)
     axes[0].legend(loc="lower right", framealpha=0.9)
 
@@ -137,7 +137,7 @@ def plot_fig1_retrieval_metrics():
 
 
 def plot_fig2_ragas_evaluation():
-    """Figure 2: RAGAS Faithfulness & Answer Relevance (Clean Method Names)."""
+    """Figure 2: RAGAS Faithfulness & Answer Relevance (Categorical Grouped Bar Charts with Clean Clearance)."""
     r1k = load_json("outputs/stage4_ragas_results_1k.json")
     r62k = load_json("outputs/stage4_ragas_results_62k.json")
 
@@ -166,40 +166,49 @@ def plot_fig2_ragas_evaluation():
     ]
 
     fig, axes = plt.subplots(1, 2, figsize=(14, 5.5))
+    x = np.arange(len(methods))
+    width = 0.35
 
-    # Subplot A: Clinical Faithfulness Line Plot
-    axes[0].plot(methods, faith_1k, marker="o", linewidth=2.5, markersize=8, color="#2a9d8f", label="1k Labeled Corpus")
-    axes[0].plot(methods, faith_62k, marker="s", linewidth=2.5, markersize=8, color="#e76f51", label="62k Expanded Corpus")
+    # Subplot A: Clinical Faithfulness Grouped Bar Chart
+    axes[0].bar(x - width/2, faith_1k, width, label="1k Labeled Corpus", color="#2a9d8f", edgecolor="black", alpha=0.9)
+    axes[0].bar(x + width/2, faith_62k, width, label="62k Expanded Corpus", color="#e76f51", edgecolor="black", alpha=0.9)
     axes[0].set_title("(a) Clinical Faithfulness (Factual Grounding)", fontweight="bold")
     axes[0].set_ylabel("RAGAS Faithfulness Score (Mean over N=3)")
-    axes[0].set_ylim(0.61, 0.73)
-    axes[0].grid(True, linestyle="--", alpha=0.5)
+    axes[0].set_xticks(x)
+    axes[0].set_xticklabels(methods)
+    axes[0].set_ylim(0.55, 0.81)
+    axes[0].grid(axis="y", linestyle="--", alpha=0.4)
     axes[0].legend(loc="upper left", framealpha=0.9)
 
     for i in range(len(methods)):
-        axes[0].text(i, faith_1k[i] + 0.005, f"{faith_1k[i]:.4f}", ha="center", fontsize=9.5, fontweight="bold", color="#1d6f65")
-        axes[0].text(i, faith_62k[i] + 0.005, f"{faith_62k[i]:.4f}", ha="center", fontsize=9.5, fontweight="bold", color="#a3452f")
+        axes[0].text(x[i] - width/2, faith_1k[i] + 0.007, f"{faith_1k[i]:.4f}", ha="center", fontsize=9)
+        axes[0].text(x[i] + width/2, faith_62k[i] + 0.007, f"{faith_62k[i]:.4f}", ha="center", fontsize=9, fontweight="bold")
 
+    # High-clearance annotation for GAR gain (placed above without overlapping numbers)
     axes[0].annotate(
-        "GAR Gain:\n+4.14%",
-        xy=(2, faith_62k[2]),
-        xytext=(1.65, 0.713),
-        arrowprops=dict(facecolor="#e76f51", arrowstyle="->", lw=1.5),
-        fontsize=10, fontweight="bold", color="#e76f51"
+        "GAR Gain: +4.14%",
+        xy=(x[2] + width/2, faith_62k[2] + 0.02),
+        xytext=(x[2] + width/2, 0.77),
+        ha="center",
+        arrowprops=dict(facecolor="#e76f51", edgecolor="#e76f51", arrowstyle="->", lw=1.5),
+        fontsize=10, fontweight="bold", color="#a3452f",
+        bbox=dict(boxstyle="round,pad=0.25", fc="#fdf0ed", ec="#e76f51", lw=1)
     )
 
-    # Subplot B: Answer Relevance Line Plot
-    axes[1].plot(methods, rel_1k, marker="o", linewidth=2.5, markersize=8, color="#2a9d8f", label="1k Labeled Corpus")
-    axes[1].plot(methods, rel_62k, marker="s", linewidth=2.5, markersize=8, color="#e76f51", label="62k Expanded Corpus")
+    # Subplot B: Answer Relevance Grouped Bar Chart
+    axes[1].bar(x - width/2, rel_1k, width, label="1k Labeled Corpus", color="#2a9d8f", edgecolor="black", alpha=0.9)
+    axes[1].bar(x + width/2, rel_62k, width, label="62k Expanded Corpus", color="#e76f51", edgecolor="black", alpha=0.9)
     axes[1].set_title("(b) Answer Relevance Consistency", fontweight="bold")
     axes[1].set_ylabel("RAGAS Answer Relevance Score (Mean over N=3)")
-    axes[1].set_ylim(0.60, 0.74)
-    axes[1].grid(True, linestyle="--", alpha=0.5)
-    axes[1].legend(loc="lower right", framealpha=0.9)
+    axes[1].set_xticks(x)
+    axes[1].set_xticklabels(methods)
+    axes[1].set_ylim(0.55, 0.79)
+    axes[1].grid(axis="y", linestyle="--", alpha=0.4)
+    axes[1].legend(loc="upper left", framealpha=0.9)
 
     for i in range(len(methods)):
-        axes[1].text(i, rel_1k[i] + 0.006, f"{rel_1k[i]:.4f}", ha="center", fontsize=9.5, fontweight="bold", color="#1d6f65")
-        axes[1].text(i, rel_62k[i] + 0.006, f"{rel_62k[i]:.4f}", ha="center", fontsize=9.5, fontweight="bold", color="#a3452f")
+        axes[1].text(x[i] - width/2, rel_1k[i] + 0.007, f"{rel_1k[i]:.4f}", ha="center", fontsize=9)
+        axes[1].text(x[i] + width/2, rel_62k[i] + 0.007, f"{rel_62k[i]:.4f}", ha="center", fontsize=9)
 
     plt.suptitle("End-to-End Generative QA Quality (Gemma-12B + Qwen3-30B Judge)", fontsize=15, fontweight="bold", y=1.02)
     plt.tight_layout()
@@ -213,7 +222,7 @@ def plot_fig2_ragas_evaluation():
 
 
 def plot_fig3_scaling_ablation():
-    """Figure 3: Corpus Scaling Ablation (Clean Method Names)."""
+    """Figure 3: Corpus Scaling Ablation (Refined Academic Palette & High Clearance Annotations)."""
     methods = ["ModernColBERT\nDense", "Cross-Encoder\nRe-Ranking", "GAR"]
     
     ndcg_1k = [0.9685, 0.9862, 0.9874]
@@ -223,14 +232,14 @@ def plot_fig3_scaling_ablation():
     x = np.arange(len(methods))
     width = 0.35
 
-    # Subplot A: Ranking Quality Across Datasets (Categorical Comparison)
-    axes[0].bar(x - width/2, ndcg_1k, width, label="1k Labeled Corpus", color="#3a86ff", edgecolor="black", alpha=0.9)
-    axes[0].bar(x + width/2, ndcg_62k, width, label="62k Expanded Corpus", color="#ff006e", edgecolor="black", alpha=0.9)
+    # Subplot A: Ranking Quality Across Datasets (Harmonious Slate Navy & Wine Palette)
+    axes[0].bar(x - width/2, ndcg_1k, width, label="1k Labeled Corpus", color="#1d3557", edgecolor="black", alpha=0.9)
+    axes[0].bar(x + width/2, ndcg_62k, width, label="62k Expanded Corpus", color="#9e2a2b", edgecolor="black", alpha=0.9)
     axes[0].set_title("(a) Ranking Robustness: 1k vs. 62k Corpus", fontweight="bold")
     axes[0].set_xticks(x)
     axes[0].set_xticklabels(methods)
     axes[0].set_ylabel("nDCG@10")
-    axes[0].set_ylim(0.65, 1.05)
+    axes[0].set_ylim(0.62, 1.12)
     axes[0].grid(axis="y", linestyle="--", alpha=0.4)
     axes[0].legend(loc="lower left", framealpha=0.9)
 
@@ -238,11 +247,25 @@ def plot_fig3_scaling_ablation():
         axes[0].text(x[i] - width/2, ndcg_1k[i] + 0.009, f"{ndcg_1k[i]:.3f}", ha="center", fontsize=9)
         axes[0].text(x[i] + width/2, ndcg_62k[i] + 0.009, f"{ndcg_62k[i]:.3f}", ha="center", fontsize=9)
 
-    # Highlight dense drop vs GAR robustness
-    axes[0].annotate("Dense Drop:\n-23.8%", xy=(x[0] + width/2, 0.7376), xytext=(x[0] + 0.05, 0.82),
-                     arrowprops=dict(facecolor="#ff006e", arrowstyle="->", lw=1.5), fontsize=9, fontweight="bold", color="#d00000")
-    axes[0].annotate("GAR Recovery:\n+17.9%", xy=(x[2] + width/2, 0.9167), xytext=(x[2] - 0.25, 0.97),
-                     arrowprops=dict(facecolor="#38b000", arrowstyle="->", lw=1.5), fontsize=9, fontweight="bold", color="#007200")
+    # Highlight dense drop vs GAR robustness (High-clearance callout boxes)
+    axes[0].annotate(
+        "Dense Drop: -23.8%",
+        xy=(x[0] + width/2, ndcg_62k[0] + 0.025),
+        xytext=(x[0] + width/2, 0.86),
+        ha="center",
+        arrowprops=dict(facecolor="#9e2a2b", edgecolor="#9e2a2b", arrowstyle="->", lw=1.3),
+        fontsize=9, fontweight="bold", color="#9e2a2b",
+        bbox=dict(boxstyle="round,pad=0.25", fc="#fdf0ed", ec="#9e2a2b", lw=1)
+    )
+    axes[0].annotate(
+        "GAR Recovery: +17.9%",
+        xy=(x[2] + width/2, ndcg_62k[2] + 0.025),
+        xytext=(x[2] + width/2, 1.05),
+        ha="center",
+        arrowprops=dict(facecolor="#2b9348", edgecolor="#2b9348", arrowstyle="->", lw=1.3),
+        fontsize=9, fontweight="bold", color="#1b4332",
+        bbox=dict(boxstyle="round,pad=0.25", fc="#ebfbee", ec="#2b9348", lw=1)
+    )
 
     # Subplot B: Faithfulness Gain Scaling (Categorical Comparison)
     corpora = ["1k Labeled Corpus", "62k Expanded Corpus\n(with 61k Distractors)"]
@@ -256,7 +279,7 @@ def plot_fig3_scaling_ablation():
     axes[1].set_xticks(x_c)
     axes[1].set_xticklabels(corpora)
     axes[1].set_ylabel("RAGAS Faithfulness Score")
-    axes[1].set_ylim(0.55, 0.77)
+    axes[1].set_ylim(0.55, 0.81)
     axes[1].grid(axis="y", linestyle="--", alpha=0.4)
     axes[1].legend(loc="upper left", framealpha=0.9)
 
@@ -264,8 +287,22 @@ def plot_fig3_scaling_ablation():
         axes[1].text(x_c[i] - width/2, dense_faith[i] + 0.007, f"{dense_faith[i]:.4f}", ha="center", fontsize=9.5)
         axes[1].text(x_c[i] + width/2, gar_faith[i] + 0.007, f"{gar_faith[i]:.4f}", ha="center", fontsize=9.5, fontweight="bold")
 
-    axes[1].text(x_c[0], 0.685, "Gain: +3.17%", ha="center", fontweight="bold", color="#023047", fontsize=10.5)
-    axes[1].text(x_c[1], 0.725, "Gain: +4.14% (Max)", ha="center", fontweight="bold", color="#023047", fontsize=10.5)
+    axes[1].annotate(
+        "Gain: +3.17%",
+        xy=(x_c[0] + width/2, gar_faith[0] + 0.015),
+        xytext=(x_c[0], 0.74),
+        ha="center",
+        fontsize=9.5, fontweight="bold", color="#023047",
+        bbox=dict(boxstyle="round,pad=0.25", fc="#e0f2fe", ec="#023047", lw=1)
+    )
+    axes[1].annotate(
+        "Gain: +4.14% (Max)",
+        xy=(x_c[1] + width/2, gar_faith[1] + 0.015),
+        xytext=(x_c[1], 0.77),
+        ha="center",
+        fontsize=9.5, fontweight="bold", color="#023047",
+        bbox=dict(boxstyle="round,pad=0.25", fc="#e0f2fe", ec="#023047", lw=1)
+    )
 
     plt.suptitle("Corpus Scaling Ablation: Impact of 61,249 Distractor Abstracts", fontsize=15, fontweight="bold", y=1.02)
     plt.tight_layout()
@@ -279,7 +316,7 @@ def plot_fig3_scaling_ablation():
 
 
 def plot_fig4_pareto_frontier():
-    """Figure 4: Latency vs nDCG@10 Pareto Frontier (Clean Method Names)."""
+    """Figure 4: Latency vs nDCG@10 Pareto Frontier (Unchanged Clean Formulation)."""
     methods = [
         {"name": "BM25s Lexical", "latency_ms": 18.38, "ndcg": 0.8433, "color": "#ff7f0e", "marker": "o", "offset": (15, 12)},
         {"name": "ModernColBERT Dense", "latency_ms": 15.81, "ndcg": 0.7376, "color": "#1f77b4", "marker": "s", "offset": (15, -25)},
@@ -320,13 +357,76 @@ def plot_fig4_pareto_frontier():
     print(f"[+] Saved Figure 4 to '{out_png}' and '{out_pdf}'.")
 
 
+def plot_fig5_faithfulness_latency_tradeoff():
+    """Figure 5: End-to-End Latency vs. RAGAS Faithfulness Pareto Frontier."""
+    # Data on 62k Full Expanded Corpus (End-to-End Pipeline Latency per Query)
+    methods = [
+        {
+            "name": "ModernColBERT Dense Baseline",
+            "latency_sec": 6.13,  # 15.8ms retrieval + 6.12s generation
+            "faithfulness": 0.6577,
+            "color": "#1f77b4",
+            "marker": "s",
+            "offset": (15, -28)
+        },
+        {
+            "name": "Cross-Encoder Re-Ranking",
+            "latency_sec": 8.18,  # 153.6ms retrieval + 8.03s generation
+            "faithfulness": 0.6716,
+            "color": "#d62728",
+            "marker": "D",
+            "offset": (-180, 15)
+        },
+        {
+            "name": "GAR",
+            "latency_sec": 5.74,  # 170.8ms retrieval + 5.57s generation
+            "faithfulness": 0.6991,
+            "color": "#2ca02c",
+            "marker": "^",
+            "offset": (15, 15)
+        }
+    ]
+
+    plt.figure(figsize=(9.5, 6))
+
+    for m in methods:
+        plt.scatter(m["latency_sec"], m["faithfulness"], s=210, color=m["color"], marker=m["marker"], label=m["name"], edgecolor="black", zorder=5)
+        plt.annotate(
+            f"{m['name']}\n{m['latency_sec']:.2f} s/query | Faithfulness: {m['faithfulness']:.4f}",
+            xy=(m["latency_sec"], m["faithfulness"]),
+            xytext=m["offset"],
+            textcoords="offset points",
+            fontsize=9.5,
+            fontweight="bold",
+            bbox=dict(boxstyle="round,pad=0.35", fc="#f8f9fa", ec=m["color"], lw=1.2, alpha=0.92),
+            arrowprops=dict(arrowstyle="->", color=m["color"], lw=1.2)
+        )
+
+    plt.xlabel("End-to-End Inference Latency (Seconds per Query)", fontweight="bold")
+    plt.ylabel("RAGAS Clinical Faithfulness Score", fontweight="bold")
+    plt.title("End-to-End Inference Latency vs. Clinical Faithfulness on 62k Corpus", fontsize=14, fontweight="bold", pad=15)
+    plt.ylim(0.64, 0.72)
+    plt.xlim(5.0, 9.2)
+    plt.grid(True, linestyle="--", alpha=0.45)
+    plt.legend(loc="lower right", framealpha=0.95, facecolor="#ffffff")
+    plt.tight_layout()
+
+    out_png = os.path.join(OUTPUT_DIR, "fig5_latency_faithfulness_tradeoff.png")
+    out_pdf = os.path.join(OUTPUT_DIR, "fig5_latency_faithfulness_tradeoff.pdf")
+    plt.savefig(out_png)
+    plt.savefig(out_pdf)
+    plt.close()
+    print(f"[+] Saved Figure 5 to '{out_png}' and '{out_pdf}'.")
+
+
 def main():
     print("=== Generating Publication-Grade Figures for Project Deliverables ===")
     plot_fig1_retrieval_metrics()
     plot_fig2_ragas_evaluation()
     plot_fig3_scaling_ablation()
     plot_fig4_pareto_frontier()
-    print("\n[+] All 4 figures generated successfully in 'outputs/figures/' (.png and .pdf)!")
+    plot_fig5_faithfulness_latency_tradeoff()
+    print("\n[+] All 5 figures generated successfully in 'outputs/figures/' (.png and .pdf)!")
 
 
 if __name__ == "__main__":
