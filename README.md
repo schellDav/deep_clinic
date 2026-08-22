@@ -42,7 +42,7 @@ This repository contains the complete implementation and empirical benchmarks fo
                      [ google/gemma-4-12B-it Generator ]
                                        │
                                        ▼
-                   [ Qwen3-30B Judge RAGAS Evaluation ]
+                     [ Qwen3-30B Judge RAGAS Evaluation ]
 ```
 
 ---
