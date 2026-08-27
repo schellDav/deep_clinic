@@ -247,16 +247,7 @@ def plot_fig3_scaling_ablation():
         axes[0].text(x[i] - width/2, ndcg_1k[i] + 0.009, f"{ndcg_1k[i]:.3f}", ha="center", fontsize=9)
         axes[0].text(x[i] + width/2, ndcg_62k[i] + 0.009, f"{ndcg_62k[i]:.3f}", ha="center", fontsize=9)
 
-    # Highlight dense drop vs GAR robustness (High-clearance callout boxes)
-    axes[0].annotate(
-        "Dense Drop: -23.8%",
-        xy=(x[0] + width/2, ndcg_62k[0] + 0.025),
-        xytext=(x[0] + width/2, 0.86),
-        ha="center",
-        arrowprops=dict(facecolor="#9e2a2b", edgecolor="#9e2a2b", arrowstyle="->", lw=1.3),
-        fontsize=9, fontweight="bold", color="#9e2a2b",
-        bbox=dict(boxstyle="round,pad=0.25", fc="#fdf0ed", ec="#9e2a2b", lw=1)
-    )
+    # Highlight GAR robustness (High-clearance callout box)
     axes[0].annotate(
         "GAR Recovery: +17.9%",
         xy=(x[2] + width/2, ndcg_62k[2] + 0.025),
