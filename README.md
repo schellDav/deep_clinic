@@ -9,11 +9,11 @@
 
 ## 1. Project Overview & Architecture
 
-This repository contains the complete implementation and empirical benchmarks for **Graph-Adaptive Re-Ranking (GAR)**, a multi-stage biomedical Retrieval-Augmented Generation (RAG) framework designed to eliminate LLM hallucinations and mitigate distractor noise in large-scale clinical corpora:
+This repository contains the complete implementation and empirical benchmarks for **Comparative Multi-Stage Retrieval and Re-Ranking**, comparing lexical, dense, neural cross-attention, and graph-adaptive retrieval strategies on biomedical QA:
 
 1. **Stage 1 (Initial Hybrid Retrieval):** Sparse Lexical (`BM25s`) and Transformer Dense Vector (`lightonai/Reason-ModernColBERT`, 768-dim) retrieval.
-2. **Stage 2 (Neural Cross-Attention Re-Ranking):** Full token-level cross-attention re-ranking via `cross-encoder/ms-marco-MiniLM-L-6-v2`.
-3. **Stage 3 (Graph-Adaptive Re-Ranking / GAR):** Multi-hop dynamic candidate expansion and relational rescoring over a pre-computed $k$-NN Corpus Graph ($1.64$ Million edges, $\tau=0.65$, depth $h=2$, decay $\alpha=0.5$).
+2. **Stage 2 (Static Neural Re-Ranking):** Full token-level cross-attention re-ranking via `cross-encoder/ms-marco-MiniLM-L-6-v2` over the Stage 1 top-100 candidate pool.
+3. **Stage 3 (Graph-Adaptive Re-Ranking / GAR):** Multi-hop dynamic candidate expansion over a pre-computed $k$-NN Corpus Graph ($1.64$ Million edges, $\tau=0.65$, depth $h=2$, decay $\alpha=0.5$) followed by Cross-Encoder neural re-scoring.
 4. **Stage 4 (Generative Synthesis & LLM-as-a-Judge Evaluation):** Clinical answer generation with `google/gemma-4-12B-it` evaluated by `Qwen/Qwen3-30B-A3B-Instruct-2507` via RAGAS metrics (*Faithfulness* and *Answer Relevance*).
 
 ```
@@ -25,24 +25,30 @@ This repository contains the complete implementation and empirical benchmarks fo
          │                                                           │
          └─────────────────────────────┬─────────────────────────────┘
                                        ▼
-                          [ Stage 1: Top-K Seeds ]
+                   ┌───────────────────────────────────────┐
+                   │   Stage 1: Initial Hybrid Retrieval   │
+                   └───────────────────┬───────────────────┘
+                                       │
+            ┌──────────────────────────┴──────────────────────────┐
+            ▼                                                     ▼
+┌───────────────────────────────┐             ┌───────────────────────────────────────┐
+│ Stage 2: Static Re-Ranking    │             │ Stage 3: Graph-Adaptive (GAR)         │
+│ • ms-marco-MiniLM-L-6-v2      │             │ • Multi-Hop Graph Expansion (1.64M)   │
+│ • Re-scores Top-100 Candidates│             │ • Cross-Encoder Neural Re-Scoring     │
+└───────────────┬───────────────┘             └───────────────────┬───────────────────┘
+                │                                                 │
+                └──────────────────────┬──────────────────────────┘
+                                       ▼
+                   ┌───────────────────────────────────────┐
+                   │    Top-5 Verified Context Passages    │
+                   └───────────────────┬───────────────────┘
                                        │
                                        ▼
-                   [ Stage 2: Multi-Hop Graph Traversal (GAR) ]
-                   (Corpus Graph A: 62k nodes, 1.64M edges)
-                                       │
-                                       ▼
-                   [ Stage 3: Cross-Encoder Neural Re-Ranking ]
-                   (ms-marco-MiniLM-L-6-v2 Cross-Attention)
-                                       │
-                                       ▼
-                   [ Top-5 Grounded Clinical Evidence Passages ]
-                                       │
-                                       ▼
-                     [ google/gemma-4-12B-it Generator ]
-                                       │
-                                       ▼
-                     [ Qwen3-30B Judge RAGAS Evaluation ]
+                   ┌───────────────────────────────────────┐
+                   │ Stage 4: Generative LLM & Evaluation  │
+                   │ • google/gemma-4-12B-it Generator     │
+                   │ • Qwen/Qwen3-30B-A3B RAGAS Judge      │
+                   └───────────────────────────────────────┘
 ```
 
 ---
