@@ -1,4 +1,4 @@
-# Graph-Adaptive Re-Ranking (GAR) for Clinical Question Answering: Mitigating Distractor Noise and Hallucinations in Biomedical RAG
+# Comparative Evaluation of Multi-Stage Retrieval and Re-Ranking Strategies for Clinical Question Answering
 
 **Course:** Deep Learning in the Clinic: From Algorithms to Virtual Cells  
 **Authors:** Alexey Wratschinski, David Schell  

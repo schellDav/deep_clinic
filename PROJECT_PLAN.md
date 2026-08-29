@@ -1,7 +1,7 @@
 # Project Requirements & Execution Plan
 
 **Course:** Deep Learning in the Clinic: From Algorithms to Virtual Cells  
-**Project Title:** Advanced RAG Benchmarking: Standard, Cross-Encoder, and GAR
+**Project Title:** Comparative Evaluation of Multi-Stage Retrieval and Re-Ranking Strategies for Clinical Question Answering
 **Authors:** Alexey Wratschinski and David Schell  
 **Dataset:** PubMedQA (Biomedical Question Answering)
 

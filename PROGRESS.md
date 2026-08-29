@@ -1,6 +1,6 @@
 Project Progress Tracker
 
-Project: Advanced RAG Benchmarking: Standard, Cross-Encoder, and GAR
+Project: Comparative Evaluation of Multi-Stage Retrieval and Re-Ranking Strategies for Clinical Question Answering
 Dataset: PubMedQA (pqa_labeled & pqa_unlabeled full corpus)
 
 ================================================================================
