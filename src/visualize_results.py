@@ -186,7 +186,7 @@ def plot_fig2_ragas_evaluation():
 
     # High-clearance annotation for GAR gain (placed above without overlapping numbers)
     axes[0].annotate(
-        "GAR Gain: +4.14pp",
+        "GAR Gain: +4.14 pp",
         xy=(x[2] + width/2, faith_62k[2] + 0.02),
         xytext=(x[2] + width/2, 0.77),
         ha="center",
@@ -249,7 +249,7 @@ def plot_fig3_scaling_ablation():
 
     # Highlight GAR robustness (High-clearance callout box)
     axes[0].annotate(
-        "GAR Recovery: +17.9pp",
+        "GAR Recovery: +17.9 pp",
         xy=(x[2] + width/2, ndcg_62k[2] + 0.025),
         xytext=(x[2] + width/2, 1.05),
         ha="center",
@@ -279,7 +279,7 @@ def plot_fig3_scaling_ablation():
         axes[1].text(x_c[i] + width/2, gar_faith[i] + 0.007, f"{gar_faith[i]:.4f}", ha="center", fontsize=9.5, fontweight="bold")
 
     axes[1].annotate(
-        "Gain: +3.17pp",
+        "Gain: +3.17 pp",
         xy=(x_c[0] + width/2, gar_faith[0] + 0.015),
         xytext=(x_c[0], 0.74),
         ha="center",
@@ -287,7 +287,7 @@ def plot_fig3_scaling_ablation():
         bbox=dict(boxstyle="round,pad=0.25", fc="#e0f2fe", ec="#023047", lw=1)
     )
     axes[1].annotate(
-        "Gain: +4.14pp (Max)",
+        "Gain: +4.14 pp (Max)",
         xy=(x_c[1] + width/2, gar_faith[1] + 0.015),
         xytext=(x_c[1], 0.77),
         ha="center",
