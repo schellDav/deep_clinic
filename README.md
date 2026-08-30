@@ -91,13 +91,8 @@ This repository contains the complete implementation and empirical benchmarks fo
 
 ```
 Project/
-├── cache/                      # Pre-computed dense embedding vectors (62249x768 .npy)
 ├── config/
 │   └── default_config.yaml     # Model configurations, batch sizes, and graph parameters
-├── data/                       # Ingested datasets and serialized sparse graph (.npz, .json, .parquet)
-│   ├── corpus_graph.npz        # 1.64M edge sparse adjacency matrix
-│   ├── ori_pqal.json           # 1,000 labeled PubMedQA QA pairs
-│   └── pqa_unlabeled.parquet   # 61,249 unlabeled distractor abstracts
 ├── outputs/                    # Benchmark JSON logs and generated publication figures
 │   ├── figures/                # Publication-grade PNG (300 DPI) and vector PDF plots
 │   │   ├── fig1_retrieval_ndcg_recall.png / .pdf
@@ -109,9 +104,6 @@ Project/
 │   ├── stage2_rerank_results_1k.json / stage2_rerank_results_62k.json
 │   ├── stage3_gar_results_1k.json / stage3_gar_results_62k.json
 │   └── stage4_ragas_results_1k.json / stage4_ragas_results_62k.json
-├── report/
-│   ├── final_report.tex        # Complete LaTeX final report document
-│   └── literatur.bib           # Complete BibTeX bibliography (15 peer-reviewed sources)
 ├── scripts/
 │   ├── setup_env.sh            # Virtual environment & Conda initializer
 │   └── slurm/                  # HPC Slurm batch execution scripts
