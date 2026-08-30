@@ -103,15 +103,17 @@ Project/
 │   │   ├── fig1_retrieval_ndcg_recall.png / .pdf
 │   │   ├── fig2_ragas_faithfulness_relevance.png / .pdf
 │   │   ├── fig3_corpus_scaling_ablation.png / .pdf
-│   │   └── fig4_latency_throughput_tradeoff.png / .pdf
+│   │   ├── fig4_latency_throughput_tradeoff.png / .pdf
+│   │   └── fig5_latency_faithfulness_tradeoff.png / .pdf
 │   ├── stage1_retrieval_results_1k.json / stage1_retrieval_results_62k.json
 │   ├── stage2_rerank_results_1k.json / stage2_rerank_results_62k.json
 │   ├── stage3_gar_results_1k.json / stage3_gar_results_62k.json
 │   └── stage4_ragas_results_1k.json / stage4_ragas_results_62k.json
 ├── report/
-│   └── final_report.tex        # Complete LaTeX final report document
+│   ├── final_report.tex        # Complete LaTeX final report document
+│   └── literatur.bib           # Complete BibTeX bibliography (15 peer-reviewed sources)
 ├── scripts/
-│   ├── setup_env.sh            # Virtual environment initializer
+│   ├── setup_env.sh            # Virtual environment & Conda initializer
 │   └── slurm/                  # HPC Slurm batch execution scripts
 │       ├── 01_build_graph.sh   # Build 62k corpus graph & compute dense embeddings
 │       ├── 02_retrieve_gar.sh  # Run Stage 1-3 retrieval and GAR re-ranking
@@ -129,10 +131,7 @@ Project/
 │   ├── retrieve_and_rerank.py  # Stage 1-3 benchmarking entrypoint
 │   ├── run_generation_and_eval.py # Stage 4 end-to-end LLM & RAGAS entrypoint
 │   └── visualize_results.py    # Publication-grade plotting script
-├── tests/                      # Automated test suite (13 unit & integration tests)
-├── FINAL_REPORT.md             # Complete scientific project report
-├── PROGRESS.md                 # Project development progress tracker
-├── PROJECT_PLAN.md             # Detailed engineering specification
+├── tests/                      # Automated test suite (26 unit & integration tests)
 ├── README.md                   # Project documentation & quickstart
 └── requirements.txt            # Python dependencies
 ```
@@ -145,9 +144,18 @@ Project/
 ```bash
 git clone https://github.com/schellDav/deep_clinic.git
 cd deep_clinic
+
+# Option A: Automated setup script
 chmod +x scripts/setup_env.sh
 ./scripts/setup_env.sh
 source .venv/bin/activate
+
+# Option B: Conda environment setup
+conda env create -f environment.yml
+conda activate deep_clinic_rag
+
+# Option C: Standard pip install
+pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu121
 ```
 
 ### Step 2: Pre-cache Models for Offline HPC Worker Nodes
@@ -155,35 +163,41 @@ source .venv/bin/activate
 python -m src.preload_models
 ```
 
-### Step 3: Run Retrieval, Graph Construction & Re-Ranking
+### Step 3: Run Retrieval, Graph Construction & Re-Ranking (Stages 1–3)
 ```bash
-# 1k Labeled Corpus:
+# 1k Labeled Corpus (Fast baseline):
 python -m src.build_graph --config config/default_config.yaml --max_passages 1000
 python -m src.retrieve_and_rerank --config config/default_config.yaml --max_passages 1000
 
-# Full 62k Expanded Corpus (with 61k Distractors):
+# Full 62k Expanded Corpus (with 61,249 Distractors):
 python -m src.build_graph --config config/default_config.yaml --max_passages 62249
 python -m src.retrieve_and_rerank --config config/default_config.yaml
 ```
 
-### Step 4: Run End-to-End LLM Generation & RAGAS Judge Evaluation
+### Step 4: Run End-to-End LLM Generation & RAGAS Evaluation (Stage 4)
 ```bash
-# On Slurm Cluster (KISSKI A100 GPU):
+# Interactive / Direct Python execution:
+python -m src.run_generation_and_eval --config config/default_config.yaml
+
+# On Slurm HPC Cluster (KISSKI A100 GPU):
 sbatch scripts/slurm/03_eval_ragas.sh
 
-# Or Full 62k End-to-End Pipeline Job:
+# Or Full 62k Pipeline Job (Chained Stages 1–4):
 sbatch scripts/slurm/04_full_corpus_ablation.sh
+
+# Or Master Orchestrator (Submits all jobs with automatic dependencies):
+bash scripts/slurm/submit_all.sh
 ```
 
 ### Step 5: Generate Publication Figures
 ```bash
 python -m src.visualize_results
 ```
-All figures will be rendered to `outputs/figures/` in both 300 DPI PNG and vector PDF formats.
+All figures (`fig1`–`fig5`) will be saved to `outputs/figures/` in both 300 DPI PNG and vector PDF formats.
 
 ### Step 6: Run Automated Test Suite
 ```bash
-pytest tests/ -v
+pytest -v
 # Or
 python -m tests.test_all_phases
 ```

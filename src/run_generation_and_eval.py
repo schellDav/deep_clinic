@@ -9,9 +9,6 @@ to 'outputs/stage4_ragas_results_1k.json' and 'outputs/stage4_ragas_results_62k.
 
 In case of failure, a complete un-truncated error traceback is automatically dumped to
 'logs/stage4_error.log' and 'outputs/stage4_error.json' for debugging.
-
-Author: Alexey Wratschinski and David Schell
-Course: Deep Learning in the Clinic
 ================================================================================
 """
 
