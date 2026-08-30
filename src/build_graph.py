@@ -15,9 +15,6 @@ Main Pipeline Steps:
     6. Construct dense cosine similarity k-NN adjacency matrix.
     7. Merge lexical and dense graphs into a symmetric hybrid adjacency matrix.
     8. Persist graph and dataset artifacts to disk (SciPy CSR matrix, JSON, NumPy arrays).
-
-Author: Alexey Wratschinski and David Schell
-Course: Deep Learning in the Clinic
 ================================================================================
 """
 

@@ -5,9 +5,6 @@ Stage 1-3 Retrieval & Re-Ranking Master Execution Pipeline (retrieve_and_rerank.
 
 This module orchestrates Stage 1 (Sparse/Dense), Stage 2 (Cross-Encoder), and 
 Stage 3 (GAR) retrieval and re-ranking baselines.
-
-Author: Alexey Wratschinski and David Schell
-Course: Deep Learning in the Clinic
 ================================================================================
 """
 
